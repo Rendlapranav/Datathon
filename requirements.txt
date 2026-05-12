@@ -1,0 +1,19 @@
+# Data Manipulation & Visualization
+pandas
+numpy
+matplotlib
+seaborn
+scipy
+
+# Machine Learning & NLP
+torch
+transformers
+accelerate
+bertopic
+scikit-learn
+sentence-transformers
+
+# Utilities
+tqdm
+ipywidgets
+huggingface-hub
