@@ -1,7 +1,5 @@
-venv/
+data/
 myenv/
 __pycache__/
-*.zip
-data/
-models/
-.ipynb_checkpoints/
+venv/
+amazon-headphoneearphoneearbuds-reviews.zip
