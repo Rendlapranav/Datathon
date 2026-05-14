@@ -1,0 +1,134 @@
+==
+day-1-output!!
+==
+
+============================================================
+DAY 2 SUMMARY - Pass to day3_matrix.py
+============================================================
+  Topics found       : 2
+  Outlier reviews    : 0 (topic_id = -1, excluded from heatmap)
+  Dominant emotions  :
+dominant_emotion
+neutral     2030
+joy         1186
+sadness      570
+surprise     393
+disgust      199
+fear          71
+anger         60
+
+  Top aspect by anger+sadness:
+  -> 'Aspect 2' (intensity=0.159, n=4459)
+
+--- TOP 5 WORDS PER ASPECT ---
+Aspect 1: ['br', 'br br', 'gym', 'senso', 'super']
+
+ Done. Pass data/clean/day2_aspects.csv to day3_matrix.py
+==
+day-3-output
+==
+(myenv) denery@pranav-HP-Laptop-15:~/Datathon$ python3 day3_business_logic.py
+Loading: data/clean/day2_aspects.csv
+Loaded 2,664 reviews | 4 aspects
+
+============================================================
+MODULE 1: STRATEGIC PRIORITIZATION ENGINE
+============================================================
+
+Thresholds applied:
+  High Frequency  : >= 5.0% of reviews
+  High Intensity  : >= 0.4 (mean anger + sadness)
+
+Aspect Priority Table:
+       topic_label  frequency_pct  emotional_intensity                      quadrant
+Battery & Charging      11.411411             0.397914 Marketing / Expectation Issue
+      Connectivity       7.019520             0.159593 Marketing / Expectation Issue
+     Sound Quality      74.512012             0.127315 Marketing / Expectation Issue
+   Value for Money       7.057057             0.098283 Marketing / Expectation Issue
+
+Priority matrix saved -> figures/day3_priority_matrix.png
+
+============================================================
+MODULE 2: ROI SIMULATION & MONETIZATION
+============================================================
+
+[BUSINESS IMPACT -- The Cost of Inaction]
+  Detected Silent Killers : 231
+  Est. Invisible Churn    : 1,155 customers
+  Revenue at Risk         : $173,250.00 (assuming $150.0 AOV)
+
+[ROI SIMULATION -- Fixing 'Battery & Charging']
+  Scenario A (neutral fix)  : Overall brand sentiment improves by +27.5%
+  Scenario B (positive fix) : Overall brand sentiment improves by +52.9%
+
+============================================================
+MODULE 3: STRATEGIC ROADMAP
+============================================================
+
+Strategic Roadmap:
+                 tier             aspect                                action
+Mid-Term (3-6 months) Battery & Charging                    Engineering Review
+Mid-Term (3-6 months)       Connectivity               UX / Design Improvement
+Mid-Term (3-6 months)      Sound Quality               UX / Design Improvement
+Mid-Term (3-6 months)    Value for Money Marketing Campaign / Tutorial Content
+
+CEO summary saved -> data/clean/ceo_summary.json
+
+DAY 3 COMPLETE -- DELIVERABLES READY FOR PPT
+
+=====
+day-1.5
+=====
+(myenv) denery@pranav-HP-Laptop-15:~/Datathon$ python3 day1.5_translate.py
+Loading: data/clean/day1_reviews_roberta.csv
+Loaded 5,000 rows
+Detecting languages...
+Language breakdown:
+lang
+en    4763
+es      63
+ro      33
+so      27
+af      24
+fr      13
+ca      13
+sq       7
+no       7
+tl       6
+nl       6
+de       5
+sl       4
+et       4
+fi       4
+sw       3
+pt       3
+cy       3
+hu       2
+it       2
+da       2
+vi       2
+sk       2
+hr       1
+sv       1
+
+Rows to translate: 237 / 5,000
+
+Loading translation model: Helsinki-NLP/opus-mt-mul-en
+config.json: 1.40kB [00:00, 2.25MB/s]
+pytorch_model.bin: 100%|███████████| 310M/310M [00:27<00:00, 11.1MB/s]
+generation_config.json: 100%|████████| 293/293 [00:00<00:00, 1.16MB/s]
+tokenizer_config.json: 100%|████████| 44.0/44.0 [00:00<00:00, 205kB/s]
+source.spm: 100%|██████████████████| 707k/707k [00:00<00:00, 3.88MB/s]
+target.spm: 100%|██████████████████| 791k/791k [00:00<00:00, 2.50MB/s]
+vocab.json: 1.42MB [00:01, 773kB/s] 33.5M/310M [00:01<00:15, 17.6MB/s]
+Device set to use cpu0:01, 1.20MB/s]
+Translating 237 reviews (batch_size=32)...
+model.safetensors:  33%|███▌       | 102M/310M [00:14<00:31, 6.52MB/s]model.safetensors:  35%|███▊       | 109M/310M [00:18<00:37, 5.41MB/s]model.safetensors: 100%|███████████| 310M/310M [00:23<00:00, 13.3MB/s]
+  237 / 237
+
+Rows translated : 237
+Rows unchanged  : 4,763
+Saved           : data/clean/day1.5_translated.csv
+
+Day 1.5 complete. Pass day1.5_translated.csv to day2_aspects.py
+

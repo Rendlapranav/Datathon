@@ -11,7 +11,6 @@ import warnings, re
 import torch
 from transformers import pipeline
 from datasets import Dataset
-from tqdm import tqdm
 from bertopic import BERTopic
 from bertopic.vectorizers import ClassTfidfTransformer
 from sklearn.feature_extraction.text import CountVectorizer
@@ -19,13 +18,26 @@ from sklearn.feature_extraction.text import CountVectorizer
 warnings.filterwarnings("ignore")
 
 # -- Config --------------------------------------------------------
-INPUT_CSV      = "data/clean/day1.5_translated.csv"   # 100% English post-T2E
+INPUT_CSV      = "data/clean/day1.5_translated.csv"
 OUTPUT_CSV     = "data/clean/day2_aspects.csv"
 FIG_DIR        = "figures"
 
-# Fast English-only emotion model -- ~80MB vs ~900MB for mDeBERTa
 EMOTION_MODEL  = "j-hartmann/emotion-english-distilroberta-base"
-EMO_LABELS     = ["anger", "disgust", "fear", "joy", "neutral", "sadness", "surprise"]
+
+# Full model output labels -- model always returns all 7, we cannot change this.
+# This is a fixed-head classifier, NOT a zero-shot NLI model.
+MODEL_EMO_LABELS = ["anger", "disgust", "fear", "joy", "neutral", "sadness", "surprise"]
+
+# The 3 signals that are semantically meaningful for hardware product reviews.
+# "sadness" is retained as the model label; renamed to "disappointment" in plots only.
+# Rationale: "fear" and "surprise" carry no actionable signal for a CEO reviewing
+# hardware complaints. "disgust" is too ambiguous to separate from "anger" reliably.
+ACTIVE_EMOTIONS  = ["anger", "sadness", "joy"]
+DISPLAY_LABELS   = {
+    "anger"  : "Anger",
+    "sadness": "Disappointment",   # semantic rename for executive communication
+    "joy"    : "Joy",
+}
 
 BATCH_SIZE     = 16
 N_TOPICS       = 5
@@ -45,7 +57,7 @@ def clean_text(text):
     text = text.replace("\xa0", " ")
     text = text.lower()
     text = re.sub(r"http\S+", "", text)
-    text = re.sub(r"[^a-z0-9\s]", " ", text)   # ASCII only -- data is now English
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
@@ -66,17 +78,10 @@ device = (
 device_id = 0 if device == "cuda" else -1
 print(f"\n[INFO] Device: {device.upper()}")
 
-# -- Step 1: BERTopic - Aspect Mining (English-only) --------------
-# SentenceTransformer removed -- BERTopic defaults to its built-in
-# English embeddings which are 3-4x faster on CPU than multilingual.
-# ClassTfidfTransformer(reduce_frequent_words=True) is kept to prevent
-# the IDF divide-by-zero crash on small corpora.
+# -- Step 1: BERTopic - Aspect Mining -----------------------------
 print("\n[STEP 1] Running BERTopic for aspect extraction...")
 
-vectorizer   = CountVectorizer(
-    stop_words  = "english",      # reverted from multilingual-safe mode
-    ngram_range = (1, 2),
-)
+vectorizer   = CountVectorizer(stop_words="english", ngram_range=(1, 2))
 ctfidf_model = ClassTfidfTransformer(reduce_frequent_words=True)
 
 bertopic_model = BERTopic(
@@ -93,7 +98,6 @@ topics, probs = bertopic_model.fit_transform(df["clean_text"].tolist())
 df["topic_id"]   = topics
 df["topic_prob"] = [p.max() if hasattr(p, "__len__") else p for p in probs]
 
-# -- Topic Info & Manual Labelling --------------------------------
 topic_info = bertopic_model.get_topic_info()
 print("\n[TOPIC INFO]")
 print(topic_info[["Topic", "Count", "Name"]].to_string(index=False))
@@ -169,63 +173,84 @@ quotes_path = "data/clean/day2_representative_quotes.csv"
 quotes_df.to_csv(quotes_path, index=False)
 print(f"\nRepresentative quotes saved -> {quotes_path}")
 
-# -- Step 2: Emotion Detection (fast English DistilRoBERTa) -------
-# Zero-shot pipeline removed. task="text-classification" with top_k=None
-# returns all 7 emotion probabilities in a single forward pass --
-# same pattern as day1_sentiment.py, consistent and fast.
+# -- Step 2: Emotion Detection ------------------------------------
+# Model: j-hartmann/emotion-english-distilroberta-base
+# This is a FIXED-HEAD classifier trained on 7 classes.
+# It is NOT a zero-shot NLI model -- candidate labels cannot be injected.
+# We run full inference (all 7 scores), then select only the 3 columns
+# that carry actionable signal for hardware product analysis.
+# Discarded: disgust, fear, surprise, neutral
+#   - "fear" and "surprise" appear on hardware reviews as noise artifacts
+#   - "disgust" correlates too strongly with "anger" to add independent signal
+#   - "neutral" is not actionable for a CEO prioritization pitch
 print(f"\n[STEP 2] Running emotion detection: {EMOTION_MODEL}")
+print(f"Model outputs 7 classes. Retaining 3 for downstream analysis: "
+      f"{ACTIVE_EMOTIONS}")
+print(f"Display rename: 'sadness' -> 'Disappointment' (executive communication only)")
 
 emo_pipeline = pipeline(
     task      = "text-classification",
     model     = EMOTION_MODEL,
     framework = "pt",
-    top_k     = None,      # return all 7 emotion scores, not just top-1
+    top_k     = None,
     device    = device_id,
     truncation= True,
     max_length= 512,
 )
 
-# Verify label set matches our EMO_LABELS before any inference
 model_labels = set(emo_pipeline.model.config.id2label.values())
-print(f"Model emotion labels: {model_labels}")
+print(f"Model emotion labels confirmed: {model_labels}")
+
+missing = [e for e in ACTIVE_EMOTIONS if e not in model_labels]
+if missing:
+    raise ValueError(
+        f"ACTIVE_EMOTIONS contains labels not in model output: {missing}\n"
+        f"Valid labels are: {model_labels}"
+    )
 
 hf_dataset  = Dataset.from_dict({"text": df["review_text"].tolist()})
-
 print(f"Running on {len(df):,} rows (batch_size={BATCH_SIZE})...")
+
 raw_outputs = emo_pipeline(
     hf_dataset["text"],
     batch_size = BATCH_SIZE,
     truncation = True,
     max_length = 512,
 )
-# raw_outputs: list of lists [ [{"label": "anger", "score": 0.7}, ...], ... ]
 
-def unpack_emotion_scores(result, label_order):
+# Unpack all 7 scores, then immediately select only ACTIVE_EMOTIONS columns.
+# Storing only the 3 active columns keeps the output CSV clean and prevents
+# downstream code from accidentally using the discarded emotion signals.
+records = []
+for result in raw_outputs:
     score_map = {item["label"]: item["score"] for item in result}
-    # Gracefully handle label mismatches between EMO_LABELS and model output
-    return np.array([score_map.get(lbl, 0.0) for lbl in label_order])
+    records.append({emo: score_map[emo] for emo in ACTIVE_EMOTIONS})
 
-emo_arr = np.array([unpack_emotion_scores(row, EMO_LABELS) for row in raw_outputs])
+emo_df = pd.DataFrame(records, index=df.index)
+for emo in ACTIVE_EMOTIONS:
+    df[f"emo_{emo}"] = emo_df[emo]
 
-for idx, label in enumerate(EMO_LABELS):
-    df[f"emo_{label}"] = emo_arr[:, idx]
+# dominant_emotion is resolved only within ACTIVE_EMOTIONS.
+# A review where "fear" would have scored highest will be assigned
+# its highest-scoring active emotion instead. This is intentional --
+# "fear" on a battery review is almost always model noise.
+emo_matrix       = emo_df[ACTIVE_EMOTIONS].values
+dominant_indices = emo_matrix.argmax(axis=1)
+df["dominant_emotion"]         = [ACTIVE_EMOTIONS[i] for i in dominant_indices]
+df["dominant_emotion_display"] = df["dominant_emotion"].map(DISPLAY_LABELS)
 
-df["dominant_emotion"] = [EMO_LABELS[i] for i in emo_arr.argmax(axis=1)]
+print("\nEmotion distribution across all reviews (active emotions only):")
+print(df["dominant_emotion_display"].value_counts().to_string())
 
-print("\nEmotion distribution across all reviews:")
-print(df["dominant_emotion"].value_counts().to_string())
-
-# -- Step 3: Feature x Emotion Heatmap & Plotting -----------------
+# -- Step 3: Visualizations ---------------------------------------
 print("\n[STEP 3] Building Feature x Emotion Visualizations...")
 df_topics = df[df["topic_id"] != -1].copy()
 
-# Heatmap A: Anger + Sadness (Urgency)
-urgency_emotions = ["anger", "sadness"]
-cols_present     = [e for e in urgency_emotions if f"emo_{e}" in df_topics.columns]
-heatmap_urgency  = (
-    df_topics.groupby("topic_label")[[f"emo_{e}" for e in cols_present]].mean() * 100
+# Heatmap A: Anger + Disappointment (Urgency) -- 2-column, clean signal
+heatmap_urgency = (
+    df_topics.groupby("topic_label")[["emo_anger", "emo_sadness"]].mean() * 100
 )
-heatmap_urgency.columns = [e.capitalize() for e in cols_present]
+heatmap_urgency.columns = ["Anger", "Disappointment"]
 
 plt.style.use("dark_background")
 fig, ax = plt.subplots(figsize=(7, 5))
@@ -235,27 +260,30 @@ sns.heatmap(
     cbar_kws={"label": "Mean probability (%)"},
 )
 ax.set_title(
-    f"Urgency Lever: Anger & Sadness Per Aspect\n"
+    f"Urgency Signal: Anger & Disappointment Per Aspect\n"
     f"Product: {df['product_id'].iloc[0]}  |  Higher = stronger silent quitter signal",
     fontsize=12, pad=12,
 )
 ax.set_xlabel("Negative Emotion", fontsize=11)
 ax.set_ylabel("Product Aspect", fontsize=11)
 plt.tight_layout()
-plt.savefig(os.path.join(FIG_DIR, "day2_heatmap_urgency.png"), dpi=300, bbox_inches="tight")
+plt.savefig(
+    os.path.join(FIG_DIR, "day2_heatmap_urgency.png"),
+    dpi=300, bbox_inches="tight",
+)
 
-# Heatmap B: Full Emotion View
-emotions_to_plot   = [e for e in EMO_LABELS if e != "neutral"]
-heatmap_data       = (
-    df_topics.groupby(["topic_label", "dominant_emotion"])
+# Heatmap B: Full 3-emotion view (dominant emotion % per aspect)
+heatmap_data = (
+    df_topics.groupby(["topic_label", "dominant_emotion_display"])
              .size()
              .unstack(fill_value=0)
 )
-heatmap_pct        = heatmap_data.div(heatmap_data.sum(axis=1), axis=0) * 100
-cols_present_full  = [e for e in emotions_to_plot if e in heatmap_pct.columns]
-heatmap_pct        = heatmap_pct[cols_present_full]
+heatmap_pct  = heatmap_data.div(heatmap_data.sum(axis=1), axis=0) * 100
+display_col_order = [DISPLAY_LABELS[e] for e in ACTIVE_EMOTIONS
+                     if DISPLAY_LABELS[e] in heatmap_pct.columns]
+heatmap_pct  = heatmap_pct[display_col_order]
 
-fig, ax = plt.subplots(figsize=(13, 6))
+fig, ax = plt.subplots(figsize=(10, 6))
 sns.heatmap(
     heatmap_pct, ax=ax, cmap="RdYlGn_r", annot=True, fmt=".1f",
     linewidths=0.5, linecolor="#1e293b",
@@ -264,26 +292,29 @@ sns.heatmap(
 )
 ax.set_title(
     f"Product Aspect x Emotion Heatmap  |  Product: {df['product_id'].iloc[0]}\n"
-    f"(% of reviews per aspect where that emotion dominates)",
+    f"(% of reviews per aspect where that emotion dominates — 3 actionable signals)",
     fontsize=13, pad=15,
 )
 ax.set_xlabel("Dominant Emotion", fontsize=11)
 ax.set_ylabel("Product Aspect", fontsize=11)
 plt.tight_layout()
-plt.savefig(os.path.join(FIG_DIR, "day2_heatmap.png"), dpi=300, bbox_inches="tight")
+plt.savefig(
+    os.path.join(FIG_DIR, "day2_heatmap.png"),
+    dpi=300, bbox_inches="tight",
+)
 
-# Bar Chart: Emotional Intensity Preview for Day 3
+# Bar Chart: Emotional Intensity (Anger + Disappointment per aspect)
 aspect_emotions = (
     df_topics.groupby("topic_label")
              .agg(
-                 mean_anger   = ("emo_anger",    "mean"),
-                 mean_sadness = ("emo_sadness",  "mean"),
-                 review_count = ("topic_label",  "count"),
+                 mean_anger        = ("emo_anger",   "mean"),
+                 mean_disappointment = ("emo_sadness", "mean"),
+                 review_count      = ("topic_label", "count"),
              )
              .reset_index()
 )
 aspect_emotions["emotional_intensity"] = (
-    aspect_emotions["mean_anger"] + aspect_emotions["mean_sadness"]
+    aspect_emotions["mean_anger"] + aspect_emotions["mean_disappointment"]
 )
 aspect_emotions = aspect_emotions.sort_values("emotional_intensity", ascending=True)
 
@@ -293,7 +324,10 @@ bars = ax.barh(
     aspect_emotions["emotional_intensity"],
     color="#ef4444", alpha=0.8,
 )
-ax.set_xlabel("Emotional Intensity (mean anger + sadness probability)", fontsize=11)
+ax.set_xlabel(
+    "Emotional Intensity (mean anger + disappointment probability)",
+    fontsize=11,
+)
 ax.set_title("Emotional Pain Per Product Aspect", fontsize=12)
 ax.grid(True, alpha=0.15, axis="x")
 for bar, (_, row) in zip(bars, aspect_emotions.iterrows()):
@@ -309,9 +343,11 @@ plt.savefig(
     dpi=300, bbox_inches="tight",
 )
 
-# -- Save Enriched CSV & Summary ----------------------------------
+# -- Save ----------------------------------------------------------
 df.to_csv(OUTPUT_CSV, index=False)
 print(f"\nEnriched dataset saved -> {OUTPUT_CSV}")
+print(f"Emotion columns written: {[f'emo_{e}' for e in ACTIVE_EMOTIONS]}")
+print(f"Discarded (not written): disgust, fear, surprise, neutral")
 
 print("\n--- TOP 5 WORDS PER ASPECT ---")
 topic_info = bertopic_model.get_topic_info()
