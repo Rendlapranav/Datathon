@@ -105,7 +105,26 @@ for tid, current_label in topic_labels.items():
         print(f"  ⚠️ WARNING: Topic {tid} is unlabelled ({current_label}). Update MANUAL_OVERRIDES!")
 
 df["topic_label"] = df["topic_id"].map(topic_labels)
+# -- Representative Reviews Extraction ----------------------------
+print("\n[REPRESENTATIVE REVIEWS] (3 most central per topic)")
+rep_docs = bertopic_model.get_representative_docs()
+representative_records = []
+for topic_id, docs in rep_docs.items():
+    if topic_id == -1:
+        continue
+    label = topic_labels.get(topic_id, f"Aspect {topic_id}")
+    for i, doc in enumerate(docs[:3]):
+        representative_records.append({
+            "topic_id"   : topic_id,
+            "topic_label": label,
+            "quote_rank" : i + 1,
+            "quote_text" : doc,
+        })
 
+quotes_df   = pd.DataFrame(representative_records)
+quotes_path = "data/clean/day2_representative_quotes.csv"
+quotes_df.to_csv(quotes_path, index=False)
+print(f"Representative quotes saved -> {quotes_path}")
 # -- Step 2: Emotion Detection ------------------------------------
 print(f"\n[STEP 2] Running Emotion Detection (GPU optimized)...")
 device_id = 0 if torch.cuda.is_available() else -1
