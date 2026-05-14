@@ -1,19 +1,24 @@
 # Data Manipulation & Visualization
-pandas
-numpy
-matplotlib
-seaborn
-scipy
+pandas==2.3.2
+numpy==2.2.6
+scipy==1.16.1
+matplotlib==3.10.5
+seaborn==0.13.2
 
 # Machine Learning & NLP
-torch
-transformers
-accelerate
-bertopic
-scikit-learn
-sentence-transformers
+torch==2.10.0
+transformers==4.55.4
+datasets==2.21.0
+bertopic==0.17.4
+scikit-learn==1.7.1
+sentence-transformers==5.5.0
+tiktoken==0.12.0
+sentencepiece==0.2.1
+langdetect==1.0.9
+sacremoses==0.1.1
+
+# Web Dashboard
+streamlit==1.48.1
 
 # Utilities
-tqdm
-ipywidgets
-huggingface-hub
+tqdm==4.67.1

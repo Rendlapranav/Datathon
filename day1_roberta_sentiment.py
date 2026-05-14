@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore")
 INPUT_CSV         = "data/clean/subcategory_sample.csv"
 OUTPUT_CSV        = "data/clean/day1_reviews_roberta.csv"
 FIG_DIR           = "figures"
-MODEL_NAME        = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+MODEL_NAME        = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
 BATCH_SIZE        = 16
 MIN_MONTH_REVIEWS = 10    # months with fewer reviews are dropped (documented)
 
