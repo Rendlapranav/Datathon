@@ -18,7 +18,7 @@ langdetect==1.0.9
 sacremoses==0.1.1
 
 # Web Dashboard
+plotly==5.20.0
 streamlit==1.48.1
-
 # Utilities
 tqdm==4.67.1
