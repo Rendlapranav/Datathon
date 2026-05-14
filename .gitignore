@@ -1,5 +1,38 @@
-data/
-myenv/
+# === DATA (never commit raw/processed data) ===
+data/raw/
+data/clean/*.csv
+data/clean/*.json
+!data/raw/.gitkeep
+!data/clean/.gitkeep
+
+# === MODEL CACHE ===
+.cache/
+huggingface/
+*.bin
+*.safetensors
+*.pt
+
+# === PYTHON ===
 __pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.env
 venv/
-amazon-headphoneearphoneearbuds-reviews.zip
+myenv/
+.venv/
+
+# === JUPYTER ===
+.ipynb_checkpoints/
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
