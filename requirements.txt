@@ -22,3 +22,5 @@ plotly==5.20.0
 streamlit==1.48.1
 # Utilities
 tqdm==4.67.1
+dash
+dash-bootstrap-components
