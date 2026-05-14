@@ -1,7 +1,90 @@
 ==
 day-1-output!!
 ==
+(myenv) denery@pranav-HP-Laptop-15:~/Datathon$ python day1_roberta_sentiment.py
+Loading: data/clean/subcategory_sample.csv
+Loaded 5,000 reviews | 2016-08-18 -> 2023-03-15
+[WARN] 'helpful_votes' not found in dataset — defaulting to 0.
 
+[helpful_votes] Non-zero: 0 reviews
+[verified_purchase] Verified: 4,610 reviews
+[sk_weight] Range: [1.00, 1.20]
+
+[INFO] Device: CPU
+       Running on CPU -- expect ~2 min per 1,000 reviews
+Loading model: cardiffnlp/twitter-xlm-roberta-base-sentiment
+Device set to use cpu
+Model labels confirmed: {0: 'negative', 1: 'neutral', 2: 'positive'}
+Mapped -> neg='negative'  neu='neutral'  pos='positive'
+
+Running inference on 5,000 rows (batch_size=16)...
+Inference complete. Score range: [-0.956, 0.941]
+
+[SANITY CHECK] Model agreement with extreme star ratings:
+  1-star reviews model calls Negative : 93.5%  (expect >60%)
+  5-star reviews model calls Positive : 90.9%  (expect >70%)
+  Model is behaving sensibly on this domain.
+
+[SILENT KILLER THRESHOLD] — Data-Driven, Not Hardcoded
+  Distribution of prob_negative on confirmed bad reviews (1-2 star):
+    p10: 0.351
+    p25: 0.559
+    p50: 0.791
+    p75: 0.908
+    p90: 0.939
+
+  Using p10 = 0.351 as our threshold.
+  Rationale: prefer recall (catch more Silent Killers) because
+  missed churners cost more than false-positive manual reviews.
+
+============================================================
+DAY 1: STAR-GAP DIAGNOSTIC REPORT
+============================================================
+  Total reviews              : 5,000
+  Average star rating        : 3.84 / 5.0
+  Average RoBERTa score      : 0.217  (-1 to +1)
+  Mean star gap              : +0.201  (+ = stars inflate reality)
+  Silent Killers             : 420 (8.4%)
+  SK threshold (data-driven) : prob_negative >= 0.351
+  Weighted Revenue at Risk   : $373,500
+  AOV assumption             : $150 (Electronics category avg)
+  Churn multiplier           : 5x (Bain & Company lower bound)
+
+  Pearson r (stars vs sentiment): 0.764  p=0.00e+00
+  -> Stars and sentiment broadly agree.
+     Lean harder on the Silent Killer breakdown for the CEO story.
+
+Top 5 Silent Killers (weighted by sk_weight):
+
+  star=4 | neg_prob=0.44 | helpful_votes=0 | sk_weight=1.20 | revenue_at_risk=$900
+  "This is my third set.  They connect to Bluetooth easily, sound great & are not too expensive.  My only complaint with th..."
+
+  star=5 | neg_prob=0.36 | helpful_votes=0 | sk_weight=1.20 | revenue_at_risk=$900
+  "My primary use for these headphones is for meetings using Skype for Business. I've had these headphones for a week now a..."
+
+  star=5 | neg_prob=0.47 | helpful_votes=0 | sk_weight=1.20 | revenue_at_risk=$900
+  "UPDATE 6/21/2018<br />I want to start off by saying that I meant to do this update for some time now. Okay, here I go......"
+
+  star=5 | neg_prob=0.43 | helpful_votes=0 | sk_weight=1.20 | revenue_at_risk=$900
+  "I had a hard time with these at first until I figured out that you have to hold down the multi-purpose button until a wo..."
+
+  star=5 | neg_prob=0.41 | helpful_votes=0 | sk_weight=1.20 | revenue_at_risk=$900
+  "I got this as a gift for my mom she sad they are very clear stay charged for a long time and very easy to use..."
+============================================================
+
+[VALIDATION] Sample exported: data/clean/manual_validation_sample.csv
+  Rows: 50
+  Action: manually label 'manually_correct' column (True/False)
+  Then compute: precision = sum(manually_correct) / 50
+  State this number in your pitch. It is the only honest evaluation metric.
+
+Enriched dataset saved: data/clean/day1_reviews_roberta.csv
+Columns added: prob_negative, prob_neutral, prob_positive,
+               roberta_score, star_normalized, star_gap,
+               is_silent_killer, helpful_votes, verified_purchase,
+               sk_weight, revenue_at_risk
+
+Day 1 complete. Pass data/clean/day1_reviews_roberta.csv to day2_aspects.py
 ============================================================
 DAY 2 SUMMARY - Pass to day3_matrix.py
 ============================================================

@@ -34,6 +34,7 @@ N_TOPICS       = 5
 MIN_TOPIC_SIZE = 20
 
 os.makedirs(FIG_DIR, exist_ok=True)
+os.makedirs("data/clean", exist_ok=True)
 
 # -- Load & Clean --------------------------------------------------
 df = pd.read_csv(INPUT_CSV)
@@ -105,6 +106,7 @@ for tid, current_label in topic_labels.items():
         print(f"  ⚠️ WARNING: Topic {tid} is unlabelled ({current_label}). Update MANUAL_OVERRIDES!")
 
 df["topic_label"] = df["topic_id"].map(topic_labels)
+
 # -- Representative Reviews Extraction ----------------------------
 print("\n[REPRESENTATIVE REVIEWS] (3 most central per topic)")
 rep_docs = bertopic_model.get_representative_docs()
@@ -125,6 +127,7 @@ quotes_df   = pd.DataFrame(representative_records)
 quotes_path = "data/clean/day2_representative_quotes.csv"
 quotes_df.to_csv(quotes_path, index=False)
 print(f"Representative quotes saved -> {quotes_path}")
+
 # -- Step 2: Emotion Detection ------------------------------------
 print(f"\n[STEP 2] Running Emotion Detection (GPU optimized)...")
 device_id = 0 if torch.cuda.is_available() else -1
@@ -149,13 +152,41 @@ df["dominant_emotion_display"] = df["dominant_emotion"].map(DISPLAY_LABELS)
 plt.style.use("dark_background")
 df_topics = df[df["topic_id"] != -1].copy()
 
-# Heatmap: Urgency
+# 1. Heatmap: Urgency
 heatmap_urgency = (df_topics.groupby("topic_label")[["emo_anger", "emo_sadness"]].mean() * 100)
 heatmap_urgency.columns = ["Anger", "Disappointment"]
 plt.figure(figsize=(7, 5))
 sns.heatmap(heatmap_urgency, cmap="YlOrRd", annot=True, fmt=".1f")
 plt.title("Urgency: Anger & Disappointment per Aspect")
-plt.savefig(os.path.join(FIG_DIR, "day2_heatmap_urgency.png"))
+plt.tight_layout()
+plt.savefig(os.path.join(FIG_DIR, "day2_heatmap_urgency.png"), dpi=300)
+
+# 2. Heatmap: Full 3-emotion view
+heatmap_data = df_topics.groupby(["topic_label", "dominant_emotion_display"]).size().unstack(fill_value=0)
+heatmap_pct  = heatmap_data.div(heatmap_data.sum(axis=1), axis=0) * 100
+display_col_order = [DISPLAY_LABELS[e] for e in ACTIVE_EMOTIONS if DISPLAY_LABELS[e] in heatmap_pct.columns]
+heatmap_pct  = heatmap_pct[display_col_order]
+
+plt.figure(figsize=(10, 6))
+sns.heatmap(heatmap_pct, cmap="RdYlGn_r", annot=True, fmt=".1f", vmin=0, vmax=100)
+plt.title("Product Aspect x Emotion Heatmap")
+plt.tight_layout()
+plt.savefig(os.path.join(FIG_DIR, "day2_heatmap.png"), dpi=300)
+
+# 3. Bar Chart: Emotional Intensity
+aspect_emotions = df_topics.groupby("topic_label").agg(
+    mean_anger=("emo_anger", "mean"),
+    mean_disappointment=("emo_sadness", "mean")
+).reset_index()
+aspect_emotions["emotional_intensity"] = aspect_emotions["mean_anger"] + aspect_emotions["mean_disappointment"]
+aspect_emotions = aspect_emotions.sort_values("emotional_intensity", ascending=True)
+
+plt.figure(figsize=(9, 5))
+plt.barh(aspect_emotions["topic_label"], aspect_emotions["emotional_intensity"], color="#ef4444", alpha=0.8)
+plt.xlabel("Emotional Intensity (mean anger + disappointment probability)")
+plt.title("Emotional Pain Per Product Aspect")
+plt.tight_layout()
+plt.savefig(os.path.join(FIG_DIR, "day2_emotional_intensity.png"), dpi=300)
 
 # -- Save ----------------------------------------------------------
 df.to_csv(OUTPUT_CSV, index=False)
