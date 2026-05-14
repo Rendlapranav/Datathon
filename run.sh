@@ -1,19 +1,30 @@
 #!/bin/bash
-# ==========================================
-# CEO Sentiment Pipeline Orchestrator
-# ==========================================
 
-echo "[1/4] Running Day 1: XLM-RoBERTa Sentiment Analysis..."
+# Exit immediately if a command exits with a non-zero status
+set -e
+
+echo "🚀 Starting backend processing pipeline..."
+
+# 1. Install dependencies
+echo "📦 Installing dependencies..."
+pip install -r requirements.txt -q
+
+# 2. Run the pipeline step-by-step
+echo "🔍 Running RoBERTa sentiment analysis..."
 python3 day1_roberta_sentiment.py
 
-echo "[2/4] Running Day 1.5: Translate-to-English (T2E) Microservice..."
-python3 setup_scripts/day1.5_translate.py
+echo "🌐 Running translation..."
+# Ensure the script is in the expected directory or provide the full path
+python3 day1.5_translate.py
 
-echo "[3/4] Running Day 2: BERTopic & Zero-Shot Emotion Extraction..."
+echo "🏷️ Running aspect extraction..."
 python3 day2_aspects.py
 
-echo "[4/4] Running Day 3: ROI Simulation & Business Matrix..."
-python3 day3_matrix.py
+echo "💼 Running business logic..."
+python3 day3_business_logic.py
 
-echo "Pipeline execution complete. Launching Executive Dashboard..."
+echo "✅ Backend processing complete!"
+
+# 3. Launch the Streamlit GUI
+echo "📊 Launching Streamlit GUI..."
 streamlit run gui/app.py
