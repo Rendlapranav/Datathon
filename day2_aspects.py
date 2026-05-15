@@ -96,14 +96,18 @@ for topic_id in sorted(df["topic_id"].unique()):
 # EMERGENCY OVERRIDE: Fix "Aspect N" names
 # ==========================================
 MANUAL_OVERRIDES = {
-    # Example: "Aspect 2": "Microphone Quality"
+    "Aspect 1": "Sound Quality",
+    "Aspect 2": "Connectivity & Peripherals",
+    "Aspect 3": "Battery & Charging",
+    "Aspect 4": "Cameras & Visual",
+    "Aspect 5": "Build Quality",
 }
 
 for tid, current_label in topic_labels.items():
     if current_label in MANUAL_OVERRIDES:
         topic_labels[tid] = MANUAL_OVERRIDES[current_label]
     elif current_label.startswith("Aspect "):
-        print(f"  ⚠️ WARNING: Topic {tid} is unlabelled ({current_label}). Update MANUAL_OVERRIDES!")
+        print(f"  WARNING: Topic {tid} is unlabelled ({current_label}). Update MANUAL_OVERRIDES!")
 
 df["topic_label"] = df["topic_id"].map(topic_labels)
 
@@ -133,8 +137,8 @@ print(f"\n[STEP 2] Running Emotion Detection (GPU optimized)...")
 device_id = 0 if torch.cuda.is_available() else -1
 emo_pipeline = pipeline("text-classification", model=EMOTION_MODEL, top_k=None, device=device_id)
 
-hf_dataset = Dataset.from_dict({"text": df["review_text"].tolist()})
-raw_outputs = emo_pipeline(hf_dataset["text"], batch_size=BATCH_SIZE, truncation=True)
+texts = df["review_text"].tolist()
+raw_outputs = emo_pipeline(texts, batch_size=BATCH_SIZE, truncation=True)
 
 records = []
 for result in raw_outputs:

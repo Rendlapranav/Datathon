@@ -1,0 +1,56 @@
+﻿=== PAGE 1 ===
+Datathon Problem Statement: The
+Product Rescue Mission
+Duration: 3 Days
+Target Audience: 3rd Year Engineering/Data Science Students (Indo-French Collaboration)
+Dataset: Amazon Product Reviews (McAuley et al.)
+1. Mission Overview
+Your team has been hired as an AI Task Force by a global brand. One of their flagship products
+is in trouble. While the average star rating remains deceptively stable, sales are declining and
+return rates are climbing. Management is confusedΓÇöthey see 4-star averages and assume
+everything is fine. Your job is to look beneath the surface, diagnose the technical and emotional
+root causes of this decline, and present a data-backed "Rescue Plan."
+2. The Data Challenge (Phased Roadmap)
+Day 1: The Diagnostic & The "Star-Gap"
+Management relies on stars; you must rely on truth.
+ΓùÅ Task: Calculate a "Sentiment Score" for reviews and compare it to the "Star Rating."
+ΓùÅ Key Analysis: Identify "Silent Killers"ΓÇöreviews with high star ratings (4 or 5) but negative
+text sentiment.
+ΓùÅ Goal: Quantify the percentage of misleadingly positive reviews and visualize the timeline
+of when sentiment began to sour.
+Day 2: Root Cause Analysis (Aspects & Emotions)
+To fix the product, you must know what is broken and how it makes people feel.
+ΓùÅ Aspect Mining: Use Topic Modeling (e.g., LDA, BERTopic) or Keyword Extraction to
+identify the top 5 product features discussed (e.g., "Battery," "Material," "App Sync").
+ΓùÅ Emotional Mapping: Perform Emotion Detection (Joy, Anger, Disappointment, Sadness)
+on these specific features.
+ΓùÅ Goal: Create a "Heatmap" linking features to emotions (e.g., "Battery" + "Anger" vs.
+"Design" + "Joy").
+Day 3: The Rescue Plan & Business Pitch
+Resources are limited. You must tell the brand what to fix first.
+ΓùÅ Prioritization Matrix: Create a 2x2 grid mapping Frequency of Complaint vs.
+Emotional Intensity.
+ΓùÅ Strategic Recommendation: Identify the "Top 3 Fixes" that will have the highest impact
+
+=== PAGE 2 ===
+on customer retention.
+ΓùÅ Final Delivery: A dashboard or presentation that translates complex AI metrics into
+actionable business advice for the CEO.
+3. Evaluation Criteria
+Criteria Description
+Analytical Rigor Accuracy of sentiment models and topic
+extraction.
+Insight Depth Going beyond basic counts to find "hidden"
+dissatisfaction.
+Communication Clarity of visualisations and the
+"persuasiveness" of the final pitch.
+Collaboration Effective integration of Indo-French team
+perspectives.
+4. Technical Tips for Students
+ΓùÅ Scope: Focus on a specific category (e.g., Electronics or Beauty) rather than the whole
+dataset.
+ΓùÅ Tools: Suggested libraries include NLTK/Spacy for NLP, Scikit-Learn for clustering, and
+Tableau, Plotly or Power BI or any choice of visualisation tools for charts.
+ΓùÅ Storytelling: Remember, the CEO doesn't want to see code; they want to see a path
+back to profitability.
+

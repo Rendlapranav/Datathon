@@ -13,8 +13,8 @@ OUTPUT_CSV = "data/clean/subcategory_sample.csv"
 N_REVIEWS  = 50_000
 
 print("=" * 60)
-print("📡 Streaming Amazon Electronics Reviews from HuggingFace")
-print(f"   Target: {N_REVIEWS:,} reviews → {OUTPUT_CSV}")
+print("Streaming Amazon Electronics Reviews from HuggingFace")
+print(f"   Target: {N_REVIEWS:,} reviews -> {OUTPUT_CSV}")
 print("=" * 60)
 
 try:
@@ -78,7 +78,7 @@ if "review_text" in df.columns:
 df = df.reset_index(drop=True)
 df.to_csv(OUTPUT_CSV, index=False)
 
-print(f"\n✅ Saved {len(df):,} reviews to {OUTPUT_CSV}")
+print(f"\nSaved {len(df):,} reviews to {OUTPUT_CSV}")
 print(f"   Columns: {list(df.columns)}")
-print(f"   Date range: {df.get('review_date', pd.Series()).min()} → {df.get('review_date', pd.Series()).max()}")
-print(f"\n➡️  Next step: python day1_roberta_sentiment.py")
+print(f"   Date range: {df.get('review_date', pd.Series()).min()} -> {df.get('review_date', pd.Series()).max()}")
+print(f"\nNext step: python day1_roberta_sentiment.py")

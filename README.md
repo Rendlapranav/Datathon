@@ -1,6 +1,6 @@
 # 🚨 The Product Rescue Mission
 
-> **Datathon 2026** · Enterprise NLP Pipeline detecting Silent Killers and quantifying revenue at risk.
+> **Product Rescue Mission Datathon 2026** · Enterprise NLP Pipeline detecting Silent Killers and quantifying revenue at risk.
 
 ## 🏆 Key Results
 | Metric | Value |

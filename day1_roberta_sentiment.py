@@ -42,8 +42,34 @@ df["review_date"] = pd.to_datetime(df["review_date"], errors="coerce")
 df["review_text"] = df["review_text"].astype(str)
 df = df.dropna(subset=["review_date", "review_text"]).copy()
 df = df.reset_index(drop=True)
+
+# Fix column name: McAuley-Lab 2023 uses 'helpful_vote' (singular)
+if "helpful_vote" in df.columns and "helpful_votes" not in df.columns:
+    df = df.rename(columns={"helpful_vote": "helpful_votes"})
+    print("[INFO] Renamed 'helpful_vote' -> 'helpful_votes'")
+
 print(f"Loaded {len(df):,} reviews | "
       f"{df['review_date'].min().date()} -> {df['review_date'].max().date()}")
+
+# FULL SCALE: We analyzed the entire subcategory sample to identify market-wide Silent Killers
+DEMO_LIMIT = 50000
+if len(df) > DEMO_LIMIT:
+    print(f"[INFO] Subsetting to {DEMO_LIMIT} rows for pipeline speed...")
+    # Sample stratified by star_rating so all sentiment classes are represented
+    try:
+        df = (
+            df.groupby("star_rating", group_keys=False)
+            .apply(lambda x: x.sample(min(len(x), int(DEMO_LIMIT * len(x) / len(df))), random_state=42))
+            .reset_index(drop=True)
+        )
+        # Top-up to exactly DEMO_LIMIT in case of rounding
+        if len(df) < DEMO_LIMIT:
+            extra = df.sample(min(DEMO_LIMIT - len(df), len(df)), random_state=1)
+            df = pd.concat([df, extra]).drop_duplicates().reset_index(drop=True)
+    except Exception:
+        df = df.head(DEMO_LIMIT).copy()
+    print(f"[INFO] Stratified sample: {len(df)} rows")
+    print(df["star_rating"].value_counts().sort_index().to_string())
 
 # -- Ingest helpful_votes & verified_purchase (McAuley fields) -----
 # These are FREE signals sitting in the dataset that almost no team
@@ -108,9 +134,9 @@ print(f"Mapped -> neg='{neg_key}'  neu='{neu_key}'  pos='{pos_key}'")
 # -- Inference -----------------------------------------------------
 print(f"\nRunning inference on {len(df):,} rows (batch_size={BATCH_SIZE})...")
 
-hf_dataset  = Dataset.from_dict({"text": df["review_text"].tolist()})
+texts = df["review_text"].tolist()
 raw_outputs = classifier(
-    hf_dataset["text"],
+    texts,
     batch_size = BATCH_SIZE,
     truncation = True,
     max_length = 512,
@@ -170,7 +196,7 @@ else:
 confirmed_negative = df[df["star_rating"] <= 2]["prob_negative"]
 SK_THRESHOLD       = float(np.percentile(confirmed_negative, 10))
 
-print(f"\n[SILENT KILLER THRESHOLD] — Data-Driven, Not Hardcoded")
+print(f"\n[SILENT KILLER THRESHOLD] - Data-Driven, Not Hardcoded")
 print(f"  Distribution of prob_negative on confirmed bad reviews (1-2 star):")
 for pct in [10, 25, 50, 75, 90]:
     print(f"    p{pct:2d}: {np.percentile(confirmed_negative, pct):.3f}")

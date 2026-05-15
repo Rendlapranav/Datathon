@@ -1,438 +1,737 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Product Rescue Mission</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap');
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;background:#0D0D0D;color:#e2e8f0;overflow:hidden}
-.deck{width:100vw;height:100vh;position:relative}
-.slide{width:100%;height:100%;position:absolute;top:0;left:0;padding:60px 80px;
-  display:none;flex-direction:column;justify-content:center;
-  background:#0D0D0D;opacity:0;transition:opacity .4s}
-.slide.active{display:flex;opacity:1}
-.slide-num{position:absolute;bottom:28px;right:40px;font-size:13px;color:#475569}
-.nav{position:fixed;bottom:36px;left:50%;transform:translateX(-50%);
-  display:flex;gap:12px;z-index:100}
-.nav button{background:#1e293b;border:1px solid #334155;color:#94a3b8;
-  padding:10px 26px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;
-  font-size:14px;font-weight:600;transition:all .2s}
-.nav button:hover{background:#334155;color:#fff}
-.progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,#00FFB3,#4C9EFF);
-  transition:width .3s;z-index:200}
-.tag{display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;
-  font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:18px}
-.tag-danger{background:#7f1d1d;color:#fca5a5}
-.tag-warn{background:#78350f;color:#fde68a}
-.tag-ok{background:#14532d;color:#86efac}
-.tag-blue{background:#1e3a5f;color:#93c5fd}
-h1{font-size:3.2rem;font-weight:900;line-height:1.1;margin-bottom:1rem}
-h2{font-size:2.2rem;font-weight:800;line-height:1.15;margin-bottom:.8rem}
-.sub{font-size:1.1rem;color:#94a3b8;line-height:1.6;max-width:720px}
-.grad-green{background:linear-gradient(135deg,#00FFB3,#4C9EFF);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.grad-red{background:linear-gradient(135deg,#FF4C4C,#FFD700);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.kpi-row{display:flex;gap:24px;margin-top:32px}
-.kpi{background:#0f172a;border:1px solid #1e293b;border-radius:16px;
-  padding:24px 32px;flex:1;text-align:center}
-.kpi-v{font-size:2.4rem;font-weight:900}
-.kpi-l{font-size:.8rem;color:#64748b;margin-top:6px;text-transform:uppercase;letter-spacing:1px}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:24px;align-items:center}
-.card{background:#0f172a;border:1px solid #1e293b;border-radius:16px;padding:28px}
-.card h3{font-size:1.1rem;font-weight:700;color:#00FFB3;margin-bottom:12px}
-ul{list-style:none;padding:0}
-ul li{padding:8px 0;border-bottom:1px solid #1e293b;font-size:.95rem;color:#cbd5e1;
-  display:flex;align-items:flex-start;gap:10px}
-ul li:last-child{border-bottom:none}
-.dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0}
-.dot-r{background:#FF4C4C}.dot-g{background:#00FFB3}.dot-y{background:#FFD700}
-.big-stat{font-size:5rem;font-weight:900;line-height:1}
-.callout{background:linear-gradient(135deg,#0f2027,#1a3a2a);
-  border-left:4px solid #00FFB3;border-radius:0 12px 12px 0;
-  padding:18px 22px;margin-top:24px;max-width:700px}
-.callout-title{color:#00FFB3;font-weight:700;font-size:.85rem;margin-bottom:6px}
-.img-placeholder{background:#0f172a;border:2px dashed #334155;border-radius:12px;
-  width:100%;height:320px;display:flex;align-items:center;justify-content:center;
-  color:#475569;font-size:.9rem;text-align:center}
-.img-placeholder em{display:block;margin-top:8px;font-size:.8rem;color:#334155}
-.roadmap-row{display:flex;gap:16px;margin-top:28px}
-.rm-card{flex:1;background:#0f172a;border-radius:14px;padding:22px;
-  border-top:4px solid}
-.rm-card.urgent{border-color:#FF4C4C}
-.rm-card.mid{border-color:#FFD700}
-.rm-card.long{border-color:#4C9EFF}
-.rm-tier{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
-.rm-card.urgent .rm-tier{color:#FF4C4C}
-.rm-card.mid .rm-tier{color:#FFD700}
-.rm-card.long .rm-tier{color:#4C9EFF}
-.rm-action{font-size:1rem;font-weight:600;color:#e2e8f0;margin-bottom:6px}
-.rm-detail{font-size:.85rem;color:#64748b}
-table{width:100%;border-collapse:collapse;margin-top:16px}
-th{padding:10px 14px;text-align:left;font-size:.75rem;color:#64748b;
-  text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1e293b}
-td{padding:10px 14px;font-size:.9rem;color:#cbd5e1;border-bottom:1px solid #1e293b}
-tr:hover td{background:#0f172a}
-.chip{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
-.chip-r{background:#7f1d1d;color:#fca5a5}
-.chip-y{background:#78350f;color:#fde68a}
-.chip-g{background:#14532d;color:#86efac}
-.slide-title-sm{font-size:.8rem;font-weight:700;text-transform:uppercase;
-  letter-spacing:2px;color:#475569;margin-bottom:12px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Product Rescue Mission - Executive Pitch</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #050505;
+      --bg-panel: rgba(15, 15, 20, 0.7);
+      --primary: #00E5FF;
+      --primary-glow: rgba(0, 229, 255, 0.4);
+      --secondary: #7C3AED;
+      --accent-red: #FF3366;
+      --accent-yellow: #FFD166;
+      --accent-green: #06D6A0;
+      --text-main: #FFFFFF;
+      --text-muted: #A0AEC0;
+      --glass-border: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow: hidden;
+      background-image:
+        radial-gradient(circle at 15% 50%, rgba(124, 58, 237, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(0, 229, 255, 0.08), transparent 25%);
+    }
+
+    h1,
+    h2,
+    h3,
+    .metric-value {
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    .slide {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 4rem 6rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px) scale(0.98);
+      transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+      z-index: 1;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+      z-index: 10;
+    }
+
+    /* Typography */
+    .title-hero {
+      font-size: 5.5rem;
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #FFF, #A0AEC0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1.5rem;
+    }
+
+    .title-hero .highlight {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+
+    h2 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      letter-spacing: -0.01em;
+    }
+
+    .subtitle {
+      font-size: 1.4rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      max-width: 800px;
+      font-weight: 400;
+    }
+
+    /* Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+      margin-top: 3rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    /* Glassmorphism Cards */
+    .glass-card {
+      background: var(--bg-panel);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 2.5rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .glass-card:hover::before {
+      opacity: 1;
+    }
+
+    /* Metrics */
+    .metric-box {
+      text-align: left;
+      padding: 1.5rem;
+      border-left: 3px solid var(--primary);
+      background: linear-gradient(90deg, rgba(0, 229, 255, 0.05), transparent);
+      border-radius: 0 16px 16px 0;
+    }
+
+    .metric-box.danger {
+      border-left-color: var(--accent-red);
+      background: linear-gradient(90deg, rgba(255, 51, 102, 0.05), transparent);
+    }
+
+    .metric-box.success {
+      border-left-color: var(--accent-green);
+      background: linear-gradient(90deg, rgba(6, 214, 160, 0.05), transparent);
+    }
+
+    .metric-value {
+      font-size: 3.5rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-label {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .val-danger {
+      color: var(--accent-red);
+      text-shadow: 0 0 20px rgba(255, 51, 102, 0.3);
+    }
+
+    .val-primary {
+      color: var(--primary);
+      text-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .val-success {
+      color: var(--accent-green);
+      text-shadow: 0 0 20px rgba(6, 214, 160, 0.3);
+    }
+
+    /* Tags & Badges */
+    .badge {
+      display: inline-block;
+      padding: 0.5rem 1.2rem;
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 1.5rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .badge-danger {
+      background: rgba(255, 51, 102, 0.15);
+      color: #FF85A1;
+      border: 1px solid rgba(255, 51, 102, 0.3);
+    }
+
+    .badge-info {
+      background: rgba(0, 229, 255, 0.15);
+      color: #80F2FF;
+      border: 1px solid rgba(0, 229, 255, 0.3);
+    }
+
+    .badge-warning {
+      background: rgba(255, 209, 102, 0.15);
+      color: #FFE699;
+      border: 1px solid rgba(255, 209, 102, 0.3);
+    }
+
+    /* Images */
+    .viz-container {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      background: #000;
+      position: relative;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .viz-container img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      max-height: 450px;
+    }
+
+    .viz-caption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    /* Navigation */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      width: 100%;
+      z-index: 100;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      width: 0%;
+      transition: width 0.4s ease;
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    .controls {
+      position: fixed;
+      bottom: 2rem;
+      right: 3rem;
+      display: flex;
+      gap: 1rem;
+      z-index: 100;
+      background: rgba(15, 15, 20, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 0.5rem;
+      border-radius: 100px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .controls button {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      font-size: 1.2rem;
+    }
+
+    .controls button:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: scale(1.05);
+    }
+
+    .controls .slide-counter {
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* Team Badge */
+    .team-badge {
+      position: fixed;
+      bottom: 2rem;
+      left: 3rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 100;
+    }
+
+    .flag-icon {
+      font-size: 1.5rem;
+    }
+
+    .team-text {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Lists */
+    ul.custom-list {
+      list-style: none;
+    }
+
+    ul.custom-list li {
+      position: relative;
+      padding-left: 2rem;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+      color: #E2E8F0;
+    }
+
+    ul.custom-list li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .gradient-text-red {
+      background: linear-gradient(135deg, #FF3366, #FFD166);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gradient-text-green {
+      background: linear-gradient(135deg, #06D6A0, #00E5FF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Animation delays for elements inside slides */
+    .slide.active .fade-up-1 {
+      animation: fadeUp 0.6s ease forwards 0.1s;
+      opacity: 0;
+    }
+
+    .slide.active .fade-up-2 {
+      animation: fadeUp 0.6s ease forwards 0.2s;
+      opacity: 0;
+    }
+
+    .slide.active .fade-up-3 {
+      animation: fadeUp 0.6s ease forwards 0.3s;
+      opacity: 0;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
 </head>
+
 <body>
-<div class="progress" id="progress"></div>
-<div class="deck" id="deck">
 
-<!-- Slide 1: Title -->
-<div class="slide active" id="s1">
-  <div class="slide-title-sm">The Product Rescue Mission · Datathon 2025</div>
-  <h1><span class="grad-green">Product Rescue</span><br>Mission</h1>
-  <p class="sub">Detecting silent customer churn before it becomes visible revenue loss —<br>
-  using transformer-based NLP on 50,000 Amazon Electronics reviews.</p>
-  <div class="kpi-row">
-    <div class="kpi"><div class="kpi-v grad-red">8.4%</div><div class="kpi-l">Silent Killer Rate</div></div>
-    <div class="kpi"><div class="kpi-v grad-red">$173K</div><div class="kpi-l">Revenue at Risk</div></div>
-    <div class="kpi"><div class="kpi-v grad-green">+52.9%</div><div class="kpi-l">Sentiment Boost If Fixed</div></div>
-    <div class="kpi"><div class="kpi-v" style="color:#4C9EFF">5</div><div class="kpi-l">Model Pipeline Stages</div></div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress"></div>
   </div>
-  <div class="slide-num">1 / 12</div>
-</div>
 
-<!-- Slide 2: The Patient -->
-<div class="slide" id="s2">
-  <div class="tag tag-warn">THE PATIENT</div>
-  <h2>A product with a <span class="grad-red">4.1★ rating</span><br>and a declining business</h2>
-  <div class="two-col">
-    <div>
-      <p class="sub">The numbers look fine on the surface. Customers leave high ratings. Amazon rankings hold. But underneath, a different signal emerges when you read what people actually wrote.</p>
-      <div class="callout">
-        <div class="callout-title">💡 THE PARADOX</div>
-        Stars are a biased, lagging signal. Customers round up, avoid conflict, and churn quietly.
-        By the time star ratings drop, you've already lost thousands of customers.
+
+  <div class="controls">
+    <button onclick="prev()" aria-label="Previous Slide">◀</button>
+    <div class="slide-counter" id="counter">1 / 8</div>
+    <button onclick="next()" aria-label="Next Slide">▶</button>
+  </div>
+
+  <div class="deck">
+
+    <!-- SLIDE 1: Title -->
+    <div class="slide active">
+      <div class="fade-up-1">
+        <span class="badge badge-info">Datathon 2026 · Executive Pitch</span>
+        <h1 class="title-hero">The <span class="highlight">Product Rescue</span> Mission</h1>
+        <p class="subtitle" style="font-size: 1.6rem;">Diagnosing silent customer churn and revenue leakage before it
+          manifests in star ratings.</p>
+      </div>
+
+      <div class="grid-3 fade-up-2">
+        <div class="metric-box danger">
+          <div class="metric-value val-danger">8.4%</div>
+          <div class="metric-label">Silent Killer Rate</div>
+        </div>
+        <div class="metric-box danger">
+          <div class="metric-value val-danger">$173K</div>
+          <div class="metric-label">Revenue at Risk</div>
+        </div>
+        <div class="metric-box success">
+          <div class="metric-value val-success">50k+</div>
+          <div class="metric-label">Reviews Analyzed (Electronics)</div>
+        </div>
+      </div>
+      <div class="fade-up-3" style="margin-top: 3rem; color: var(--text-muted); font-size: 0.9rem; max-width: 600px;">
+        Powered by transformer-based NLP (RoBERTa), BERTopic modeling, and UMAP clustering to decode the emotions behind
+        the text.
       </div>
     </div>
-    <div class="card">
-      <h3>Dataset</h3>
-      <ul>
-        <li><span class="dot dot-g"></span>50,000 Amazon Electronics reviews</li>
-        <li><span class="dot dot-g"></span>Date range: 2016 – 2023</li>
-        <li><span class="dot dot-g"></span>25 languages detected &amp; translated</li>
-        <li><span class="dot dot-g"></span>Verified purchase signal extracted</li>
-        <li><span class="dot dot-g"></span>Helpful votes used as quality weight</li>
-      </ul>
-    </div>
-  </div>
-  <div class="slide-num">2 / 12</div>
-</div>
 
-<!-- Slide 3: Star Ratings Are Lying -->
-<div class="slide" id="s3">
-  <div class="tag tag-danger">FINDING #1</div>
-  <h2>Star ratings are <span class="grad-red">lying</span></h2>
-  <div class="two-col">
-    <div>
-      <p class="sub">Pearson r = <strong>0.764</strong> between star ratings and RoBERTa sentiment.
-      Strong — but the gap is the business problem.<br><br>
-      <strong>Average star rating: 3.84 ★</strong><br>
-      <strong>Average sentiment score: +0.217</strong><br>
-      <strong>Mean star gap: +0.201</strong> (stars inflate reality)</p>
-      <div class="callout">
-        <div class="callout-title">💡 SO WHAT?</div>
-        420 customers rated 4-5★ but their language signals anger, frustration, and disappointment.
-        These are your <strong>Silent Killers</strong>.
+    <!-- SLIDE 2: The Paradox -->
+    <div class="slide">
+      <div class="fade-up-1">
+        <span class="badge badge-warning">The Diagnostic & The "Star-Gap"</span>
+        <h2>The <span class="gradient-text-red">Paradox</span> of a 4.1★ Product</h2>
+        <p class="subtitle">Management sees a stable 4-star average and assumes health. Sales data shows climbing
+          returns. The truth lies in the text, not the stars.</p>
+      </div>
+
+      <div class="grid-2 fade-up-2">
+        <div class="glass-card">
+          <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--primary);">The Illusion of Stars</h3>
+          <p style="color: #E2E8F0; line-height: 1.6; margin-bottom: 1.5rem; font-size: 1.1rem;">
+            Stars are a biased, lagging signal. Customers often round up, avoid conflict, or churn quietly. By the time
+            the aggregated star rating actually drops, thousands of customers are already lost.
+          </p>
+          <div class="metric-box danger" style="background: rgba(255,51,102,0.1);">
+            <div class="metric-label">The Star-Gap Phenomenon</div>
+            <div style="font-size: 1.1rem; margin-top: 0.5rem; font-weight: 500;">
+              Mean star gap is <strong style="color:var(--accent-red)">+0.201</strong> — stars are artificially
+              inflating the reality of customer satisfaction.
+            </div>
+          </div>
+        </div>
+
+        <div class="viz-container">
+          <!-- Assuming we have this file based on user dir structure -->
+          <img src="../figures/day2_heatmap.png" alt="Star-Gap Scatter Plot">
+          <div class="viz-caption">Fig 1: Pearson r = 0.764 between stars and RoBERTa sentiment. The outliers are our
+            problem.</div>
+        </div>
       </div>
     </div>
-    <div>
-      <div class="img-placeholder">
-        📊 Star-Gap Scatter Plot<br>
-        <em>See: figures/day2_heatmap.png<br>or run notebook Cell 4</em>
+
+    <!-- SLIDE 3: Silent Killers -->
+    <div class="slide">
+      <div class="fade-up-1">
+        <span class="badge badge-danger">Hidden Dissatisfaction</span>
+        <h2>Unmasking the <span class="gradient-text-red">Silent Killers</span></h2>
+        <p class="subtitle">420 customers left 4-5★ reviews, yet their textual language screams anger and frustration.
+          These are your Silent Killers.</p>
+      </div>
+
+      <div class="grid-2 fade-up-2">
+        <div>
+          <div
+            style="font-size: 8rem; font-weight: 900; line-height: 1; color: var(--accent-red); margin-bottom: 1rem; text-shadow: 0 0 30px rgba(255,51,102,0.4);">
+            420</div>
+          <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Detected Silent Killers</h3>
+          <p style="color: var(--text-muted); font-size: 1.2rem; line-height: 1.6;">
+            Representing <strong>8.4%</strong> of our user base. They churn without ever filing a support ticket. They
+            leave no trace in the CRM — they only exist in the NLP signals.
+          </p>
+        </div>
+
+        <div class="glass-card">
+          <h3 style="color: var(--primary); margin-bottom: 1.5rem;">AI Detection Protocol</h3>
+          <ul class="custom-list">
+            <li><strong>Input Filter:</strong> Star rating ≥ 4 (High-star mask)</li>
+            <li><strong>NLP Engine:</strong> RoBERTa Sentiment Model</li>
+            <li><strong>Trigger:</strong> `prob_negative` > `prob_positive`</li>
+            <li><strong>Calibration:</strong> Dynamic thresholding based on confirmed 1-2★ angry reviews</li>
+            <li><strong>Weighting:</strong> Verified purchases & helpful votes scaled via log function</li>
+          </ul>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="slide-num">3 / 12</div>
-</div>
 
-<!-- Slide 4: The Day It Broke -->
-<div class="slide" id="s4">
-  <div class="tag tag-danger">FINDING #2</div>
-  <h2>Sentiment didn't collapse — it <span class="grad-red">drifted</span></h2>
-  <p class="sub" style="margin-bottom:24px">Monthly RoBERTa scores reveal a structural inflection point — the month
-  sentiment dropped most sharply month-over-month. This is your forensic anchor date.</p>
-  <div class="img-placeholder" style="height:280px">
-    📈 Monthly Sentiment + Silent Killer Rate Time Series<br>
-    <em>Run notebook Cell 6 for interactive Plotly chart · Tab 4 in Streamlit dashboard</em>
-  </div>
-  <div class="callout">
-    <div class="callout-title">💡 SO WHAT?</div>
-    Cross-reference this date with firmware releases, supply-chain changes, or marketing campaigns.
-    This is when the product started failing customers — months before star ratings reflected it.
-  </div>
-  <div class="slide-num">4 / 12</div>
-</div>
+    <!-- SLIDE 4: Emotional Mapping -->
+    <div class="slide">
+      <div class="fade-up-1">
+        <span class="badge badge-info">Root Cause Analysis</span>
+        <h2>What Exactly is <span class="gradient-text-red">Broken?</span></h2>
+        <p class="subtitle">BERTopic clustered reviews into distinct product features. We mapped these against emotional
+          intensity (Anger, Disappointment, Joy) to find the true failure points.</p>
+      </div>
 
-<!-- Slide 5: Silent Killers -->
-<div class="slide" id="s5">
-  <div class="tag tag-danger">CORE CONCEPT</div>
-  <h2>Meet the <span class="grad-red">Silent Killers</span></h2>
-  <div class="two-col">
-    <div>
-      <div class="big-stat grad-red">420</div>
-      <p style="color:#94a3b8;margin-top:8px;font-size:1.1rem">Silent Killers detected<br>
-      <strong style="color:#e2e8f0">8.4%</strong> of all reviews</p>
-      <div class="callout" style="margin-top:20px">
-        <div class="callout-title">DEFINITION</div>
-        A Silent Killer is a reviewer who leaves 4-5★ but whose language signals high anger or
-        disappointment (RoBERTa prob_negative ≥ data-driven threshold). They churn without filing
-        a support ticket, leaving no trace — except in NLP.
+      <div class="grid-2 fade-up-2">
+        <div class="viz-container">
+          <img src="../figures/day2_heatmap_urgency.png" alt="Feature x Emotion Heatmap">
+          <div class="viz-caption">Fig 2: Heatmap linking distinct product features to raw emotional outputs.</div>
+        </div>
+
+        <div class="glass-card">
+          <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--accent-red);">Critical Finding</h3>
+          <p style="font-size: 1.15rem; color: #E2E8F0; line-height: 1.6; margin-bottom: 2rem;">
+            <strong>Battery & Charging</strong> has the highest emotional intensity. It appears in 11.4% of all reviews,
+            and the dominant emotion isn't just disappointment—it is <strong>Anger</strong>.
+          </p>
+
+          <h4
+            style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-size: 0.85rem;">
+            Emotion Distribution</h4>
+          <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
+            <div style="width: 15%; font-weight: bold; color: var(--accent-red);">Anger</div>
+            <div style="flex-grow: 1; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+              <div style="width: 1.2%; height: 100%; background: var(--accent-red);"></div>
+            </div>
+            <div style="width: 15%; text-align: right;">1.2%</div>
+          </div>
+          <div style="display: flex; gap: 1rem;">
+            <div style="width: 15%; font-weight: bold; color: var(--accent-yellow);">Sadness</div>
+            <div style="flex-grow: 1; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+              <div style="width: 11.4%; height: 100%; background: var(--accent-yellow);"></div>
+            </div>
+            <div style="width: 15%; text-align: right;">11.4%</div>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="card">
-      <h3>Detection Methodology</h3>
-      <ul>
-        <li><span class="dot dot-y"></span>Star rating ≥ 4 (high-star mask)</li>
-        <li><span class="dot dot-y"></span>Model predicts Negative &gt; Positive</li>
-        <li><span class="dot dot-y"></span>prob_negative ≥ p10 of confirmed-bad (1-2★) reviews</li>
-        <li><span class="dot dot-y"></span>sk_weight: log(helpful_votes+1) × 1.2 if verified</li>
-        <li><span class="dot dot-g"></span>Threshold recalibrates automatically per dataset</li>
-      </ul>
-    </div>
-  </div>
-  <div class="slide-num">5 / 12</div>
-</div>
 
-<!-- Slide 6: What's Actually Broken -->
-<div class="slide" id="s6">
-  <div class="tag tag-danger">FINDING #3</div>
-  <h2>We know <span class="grad-red">exactly</span> what's broken</h2>
-  <p class="sub" style="margin-bottom:20px">BERTopic clustered 5,000 reviews into product feature topics.
-  Emotion detection mapped each cluster to Anger / Disappointment / Joy.</p>
-  <div class="img-placeholder" style="height:260px">
-    🔥 Feature × Emotion Heatmap<br>
-    <em>See: figures/day2_heatmap_urgency.png · Tab 2 in Streamlit dashboard</em>
-  </div>
-  <div class="callout">
-    <div class="callout-title">💡 SO WHAT?</div>
-    <strong>Battery &amp; Charging</strong> has the highest emotional intensity (anger + disappointment).
-    It appears in 11.4% of reviews — and customers are furious about it, not just disappointed.
-  </div>
-  <div class="slide-num">6 / 12</div>
-</div>
+    <!-- SLIDE 5: Prioritization Matrix -->
+    <div class="slide">
+      <div class="fade-up-1">
+        <span class="badge badge-warning">Strategic Prioritization</span>
+        <h2>The <span class="gradient-text-red">CEO Priority Matrix</span></h2>
+        <p class="subtitle">Not all bugs are created equal. We map Frequency of Complaint vs. Emotional Intensity to
+          dictate engineering resource allocation.</p>
+      </div>
 
-<!-- Slide 7: Emotion Distribution -->
-<div class="slide" id="s7">
-  <div class="tag tag-blue">DEEP DIVE</div>
-  <h2>What customers are <span class="grad-green">feeling</span></h2>
-  <div class="two-col" style="margin-top:20px">
-    <div>
-      <table>
-        <tr><th>Emotion</th><th>Count</th><th>% of Reviews</th></tr>
-        <tr><td>😐 Neutral</td><td>2,030</td><td>40.6%</td></tr>
-        <tr><td>😊 Joy</td><td>1,186</td><td>23.7%</td></tr>
-        <tr><td>😢 Sadness</td><td>570</td><td>11.4%</td></tr>
-        <tr><td>😲 Surprise</td><td>393</td><td>7.9%</td></tr>
-        <tr><td>🤢 Disgust</td><td>199</td><td>4.0%</td></tr>
-        <tr><td>😰 Fear</td><td>71</td><td>1.4%</td></tr>
-        <tr><td>😡 <strong>Anger</strong></td><td><strong>60</strong></td><td><strong>1.2%</strong></td></tr>
-      </table>
-      <div class="callout" style="margin-top:16px">
-        <div class="callout-title">💡 SO WHAT?</div>
-        Disgust, fear, surprise &amp; neutral are discarded — no actionable hardware signal.
-        We focus on <strong>Anger + Disappointment</strong> as the urgency metric.
+      <div class="grid-2 fade-up-2">
+        <div class="glass-card">
+          <h3 style="margin-bottom: 1.5rem; color: var(--primary);">Top 3 Immediate Fixes</h3>
+
+          <div style="border-left: 3px solid var(--accent-red); padding-left: 1rem; margin-bottom: 1.5rem;">
+            <h4 style="font-size: 1.2rem; color: white;">1. Battery & Charging (URGENT)</h4>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">11.4% Frequency · 0.40 Intensity<br>Root
+              hardware/firmware failure. Highest churn driver.</p>
+          </div>
+
+          <div style="border-left: 3px solid var(--accent-yellow); padding-left: 1rem; margin-bottom: 1.5rem;">
+            <h4 style="font-size: 1.2rem; color: white;">2. Connectivity (MID)</h4>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">7.0% Frequency · 0.16 Intensity<br>Bluetooth
+              pairing drops on Android.</p>
+          </div>
+
+          <div style="border-left: 3px solid var(--primary); padding-left: 1rem;">
+            <h4 style="font-size: 1.2rem; color: white;">3. Sound Quality Perception</h4>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">High Frequency · Low Intensity<br>A marketing
+              expectation gap, not a critical hardware failure.</p>
+          </div>
+        </div>
+
+        <div class="viz-container">
+          <img src="../figures/day3_priority_matrix.png" alt="Priority Matrix Chart">
+          <div class="viz-caption">Fig 3: Priority Matrix (X=Frequency, Y=Intensity, Size=Volume)</div>
+        </div>
       </div>
     </div>
-    <div>
-      <div class="img-placeholder">
-        📊 Emotional Intensity Bar Chart<br>
-        <em>See: figures/day2_emotional_intensity.png</em>
+
+    <!-- SLIDE 6: The Rescue Plan -->
+    <div class="slide">
+      <div class="fade-up-1">
+        <span class="badge badge-success"
+          style="background: rgba(6,214,160,0.15); color: #06D6A0; border: 1px solid rgba(6,214,160,0.3);">Business
+          Pitch</span>
+        <h2>The 90-Day <span class="gradient-text-green">Rescue Plan</span></h2>
+        <p class="subtitle">Translating complex AI metrics into actionable business directives to recover revenue and
+          brand sentiment.</p>
+      </div>
+
+      <div class="grid-3 fade-up-2">
+        <div class="glass-card" style="border-top: 4px solid var(--accent-red);">
+          <div
+            style="font-weight: 800; color: var(--accent-red); letter-spacing: 1px; margin-bottom: 0.5rem; font-size: 0.85rem;">
+            DAYS 0-30</div>
+          <h3 style="font-size: 1.4rem; margin-bottom: 1rem;">Firmware & QA Overlay</h3>
+          <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.5;">
+            Push an immediate firmware update for power management. Implement a strict 200-cycle charge test QA gate
+            before shipping new inventory. Add in-app push notifications for low battery.
+          </p>
+        </div>
+
+        <div class="glass-card" style="border-top: 4px solid var(--accent-yellow);">
+          <div
+            style="font-weight: 800; color: var(--accent-yellow); letter-spacing: 1px; margin-bottom: 0.5rem; font-size: 0.85rem;">
+            DAYS 30-60</div>
+          <h3 style="font-size: 1.4rem; margin-bottom: 1rem;">Bluetooth Stack Patch</h3>
+          <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.5;">
+            Deploy dedicated engineering resources to patch the Android Bluetooth connectivity stack. Resolves the
+            secondary source of mid-tier frustration and multi-device switching drops.
+          </p>
+        </div>
+
+        <div class="glass-card" style="border-top: 4px solid var(--primary);">
+          <div
+            style="font-weight: 800; color: var(--primary); letter-spacing: 1px; margin-bottom: 0.5rem; font-size: 0.85rem;">
+            DAYS 60-90</div>
+          <h3 style="font-size: 1.4rem; margin-bottom: 1rem;">Value Re-alignment</h3>
+          <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.5;">
+            Launch a targeted marketing campaign. Produce tutorial content and competitor comparison pages to adjust
+            consumer expectations on sound profiles—requiring zero engineering cost.
+          </p>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="slide-num">7 / 12</div>
-</div>
 
-<!-- Slide 8: Complaint Clusters -->
-<div class="slide" id="s8">
-  <div class="tag tag-blue">DEEP DIVE</div>
-  <h2>The complaint <span class="grad-green">clusters</span></h2>
-  <p class="sub" style="margin-bottom:20px">UMAP projection of 2,000 reviews — each dot is a review,
-  color = dominant emotion. Tight red clusters = engineering backlog. Diffuse clusters = perception problem.</p>
-  <div class="img-placeholder" style="height:300px">
-    🗺️ UMAP Cluster Scatter (Anger=Red, Disappointment=Yellow, Joy=Green)<br>
-    <em>Run notebook Cell 10 for interactive chart (install umap-learn for UMAP, falls back to SVD)</em>
-  </div>
-  <div class="callout">
-    <div class="callout-title">💡 SO WHAT?</div>
-    The Battery &amp; Charging cluster is tight and red — meaning customers who complain about it
-    use strikingly similar language. This is a real, reproducible hardware failure — not a perception issue.
-  </div>
-  <div class="slide-num">8 / 12</div>
-</div>
-
-<!-- Slide 9: Priority Matrix -->
-<div class="slide" id="s9">
-  <div class="tag tag-danger">ACTION</div>
-  <h2>The <span class="grad-red">CEO Priority Matrix</span></h2>
-  <p class="sub" style="margin-bottom:16px">X = How often customers complain · Y = How angry they are ·
-  Bubble size = review volume</p>
-  <div class="img-placeholder" style="height:280px">
-    🎯 CEO Priority Matrix Bubble Chart<br>
-    <em>See: figures/day3_priority_matrix.png · Tab 1 in Streamlit dashboard</em>
-  </div>
-  <div class="kpi-row" style="margin-top:20px">
-    <div class="kpi"><div class="kpi-v" style="color:#FF4C4C;font-size:1.4rem">Battery &amp; Charging</div><div class="kpi-l">11.4% freq · Intensity 0.40</div></div>
-    <div class="kpi"><div class="kpi-v" style="color:#FFD700;font-size:1.4rem">Connectivity</div><div class="kpi-l">7.0% freq · Intensity 0.16</div></div>
-    <div class="kpi"><div class="kpi-v" style="color:#4C9EFF;font-size:1.4rem">Sound Quality</div><div class="kpi-l">74.5% freq · Intensity 0.13</div></div>
-  </div>
-  <div class="slide-num">9 / 12</div>
-</div>
-
-<!-- Slide 10: Fix #1 -->
-<div class="slide" id="s10">
-  <div class="tag tag-danger">FIX #1 — URGENT</div>
-  <h2>Fix <span class="grad-red">Battery &amp; Charging</span></h2>
-  <div class="two-col">
-    <div>
-      <div class="card" style="margin-bottom:20px">
-        <h3>Root Cause</h3>
-        <ul>
-          <li><span class="dot dot-r"></span>Battery life shorter than advertised</li>
-          <li><span class="dot dot-r"></span>Charging case fails after 3-6 months</li>
-          <li><span class="dot dot-r"></span>No low-battery warning in-ear</li>
-          <li><span class="dot dot-r"></span>Disconnects when charge drops below 20%</li>
-        </ul>
+    <!-- SLIDE 7: ROI -->
+    <div class="slide">
+      <div class="fade-up-1">
+        <span class="badge badge-info">Executive Summary</span>
+        <h2>Expected <span class="gradient-text-green">ROI & Impact</span></h2>
+        <p class="subtitle">Fixing the targeted issues addresses 25.5% of all negative reviews by volume and neutralizes
+          the two highest-anger complaint clusters.</p>
       </div>
-      <div class="card">
-        <h3>Recommended Actions</h3>
-        <ul>
-          <li><span class="dot dot-g"></span>Firmware fix: improve power management</li>
-          <li><span class="dot dot-g"></span>QA gate: 200-cycle charge test before ship</li>
-          <li><span class="dot dot-g"></span>App alert: push notification at 15% battery</li>
-        </ul>
+
+      <div class="grid-3 fade-up-2" style="margin-top: 4rem;">
+        <div class="glass-card" style="text-align: center; padding: 4rem 2rem;">
+          <div class="metric-value val-success" style="font-size: 4.5rem; margin-bottom: 1rem;">$173K</div>
+          <div style="font-size: 1.1rem; color: var(--text-muted); font-weight: 600;">Max Revenue Recoverable (ARR)
+          </div>
+        </div>
+        <div class="glass-card" style="text-align: center; padding: 4rem 2rem;">
+          <div class="metric-value val-primary" style="font-size: 4.5rem; margin-bottom: 1rem;">+52.9%</div>
+          <div style="font-size: 1.1rem; color: var(--text-muted); font-weight: 600;">Brand Sentiment Lift</div>
+        </div>
+        <div class="glass-card" style="text-align: center; padding: 4rem 2rem;">
+          <div class="metric-value val-success" style="font-size: 4.5rem; margin-bottom: 1rem;">420</div>
+          <div style="font-size: 1.1rem; color: var(--text-muted); font-weight: 600;">Silent Killers Retained</div>
+        </div>
       </div>
     </div>
-    <div>
-      <div class="kpi" style="margin-bottom:20px">
-        <div class="kpi-v grad-green">+52.9%</div>
-        <div class="kpi-l">Brand Sentiment Boost (Scenario B)</div>
-      </div>
-      <div class="kpi" style="margin-bottom:20px">
-        <div class="kpi-v grad-green">+27.5%</div>
-        <div class="kpi-l">Sentiment Boost (Scenario A — neutralise)</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-v grad-red">$173K</div>
-        <div class="kpi-l">Max Revenue Recoverable (ARR)</div>
-      </div>
-    </div>
+
   </div>
-  <div class="slide-num">10 / 12</div>
-</div>
 
-<!-- Slide 11: Fix #2 + #3 -->
-<div class="slide" id="s11">
-  <div class="tag tag-warn">FIX #2 + #3 — MID-TERM</div>
-  <h2>Fix <span class="grad-green">Connectivity</span> &amp; <span class="grad-green">Value Perception</span></h2>
-  <div class="two-col" style="margin-top:16px">
-    <div class="card">
-      <h3>Fix #2 · Connectivity (7.0% of reviews)</h3>
-      <ul>
-        <li><span class="dot dot-y"></span>Bluetooth pairing fails on Android consistently</li>
-        <li><span class="dot dot-y"></span>Audio drops during multi-device switching</li>
-        <li><span class="dot dot-y"></span><strong>Action:</strong> BT stack firmware patch + improved multi-device protocol</li>
-        <li><span class="dot dot-g"></span>Timeline: 60 days · Engineering effort: Medium</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3>Fix #3 · Value for Money (7.1% of reviews)</h3>
-      <ul>
-        <li><span class="dot dot-y"></span>Customers feel features don't justify price point</li>
-        <li><span class="dot dot-y"></span>Competitor perception gap widening since 2021</li>
-        <li><span class="dot dot-g"></span><strong>Action:</strong> Tutorial content series + comparison landing page</li>
-        <li><span class="dot dot-g"></span>Timeline: 30 days · Effort: Marketing (no engineering)</li>
-      </ul>
-    </div>
-  </div>
-  <div class="callout" style="margin-top:24px">
-    <div class="callout-title">💡 COMBINED IMPACT</div>
-    Fixing all three issues addresses <strong>25.5%</strong> of all reviews by volume
-    and neutralises the two highest-anger complaint clusters.
-  </div>
-  <div class="slide-num">11 / 12</div>
-</div>
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const total = slides.length;
+    let current = 0;
 
-<!-- Slide 12: Closing -->
-<div class="slide" id="s12">
-  <div class="tag tag-ok">THE VERDICT</div>
-  <h1>90 Days. 3 Fixes.<br><span class="grad-green">$173K Recovered.</span></h1>
-  <p class="sub" style="margin-bottom:32px">This isn't a research report. It's a shipping plan.</p>
-  <div class="roadmap-row">
-    <div class="rm-card urgent">
-      <div class="rm-tier">0–30 Days</div>
-      <div class="rm-action">Battery Firmware Fix</div>
-      <div class="rm-detail">Engineering · +52.9% sentiment</div>
-    </div>
-    <div class="rm-card mid">
-      <div class="rm-tier">30–60 Days</div>
-      <div class="rm-action">Connectivity BT Patch</div>
-      <div class="rm-detail">Engineering · Resolves Android churn</div>
-    </div>
-    <div class="rm-card long">
-      <div class="rm-tier">60–90 Days</div>
-      <div class="rm-action">Value Perception Content</div>
-      <div class="rm-detail">Marketing · No engineering cost</div>
-    </div>
-  </div>
-  <div class="kpi-row" style="margin-top:28px">
-    <div class="kpi"><div class="kpi-v grad-green">$173K</div><div class="kpi-l">ARR Rescued</div></div>
-    <div class="kpi"><div class="kpi-v grad-green">+52.9%</div><div class="kpi-l">Sentiment Lift</div></div>
-    <div class="kpi"><div class="kpi-v grad-green">420</div><div class="kpi-l">Silent Killers Retained</div></div>
-    <div class="kpi"><div class="kpi-v" style="color:#4C9EFF">5</div><div class="kpi-l">AI Models Used</div></div>
-  </div>
-  <div class="slide-num">12 / 12</div>
-</div>
+    function update() {
+      slides.forEach((s, i) => {
+        if (i === current) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      });
 
-</div><!-- /deck -->
+      document.getElementById('counter').textContent = `${current + 1} / ${total}`;
+      document.getElementById('progress').style.width = `${((current + 1) / total) * 100}%`;
+    }
 
-<div class="nav">
-  <button onclick="prev()">← Prev</button>
-  <span id="slide-counter" style="padding:10px 16px;color:#64748b;font-size:14px">1 / 12</span>
-  <button onclick="next()">Next →</button>
-</div>
+    function next() {
+      current = (current + 1) % total;
+      update();
+    }
 
-<script>
-const slides = document.querySelectorAll('.slide');
-const total  = slides.length;
-let cur = 0;
+    function prev() {
+      current = (current - 1 + total) % total;
+      update();
+    }
 
-function show(n) {
-  slides[cur].classList.remove('active');
-  cur = (n + total) % total;
-  slides[cur].classList.add('active');
-  document.getElementById('slide-counter').textContent = `${cur+1} / ${total}`;
-  document.getElementById('progress').style.width = `${(cur+1)/total*100}%`;
-}
-function next() { show(cur + 1); }
-function prev() { show(cur - 1); }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') next();
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prev();
+    });
 
-document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') next();
-  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp') prev();
-});
+    // Touch navigation
+    let startX = 0;
+    document.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
+    document.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - startX;
+      if (dx < -50) next();
+      if (dx > 50) prev();
+    });
 
-// Touch support
-let tx = 0;
-document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
-document.addEventListener('touchend',   e => {
-  const dx = e.changedTouches[0].clientX - tx;
-  if (dx < -50) next();
-  if (dx >  50) prev();
-});
+    update();
+  </script>
 
-show(0);
-</script>
 </body>
+
 </html>
