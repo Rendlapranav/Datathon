@@ -1,6 +1,6 @@
 # 🚨 The Product Rescue Mission
 
-> **Datathon 2025** · Enterprise NLP Pipeline detecting Silent Killers and quantifying revenue at risk.
+> **Datathon 2026** · Enterprise NLP Pipeline detecting Silent Killers and quantifying revenue at risk.
 
 ## 🏆 Key Results
 | Metric | Value |
@@ -59,6 +59,8 @@ cd Datathon
 ## 🚀 Quickstart (Linux/Mac)
 
 ```bash
+git clone https://github.com/Rendlapranav/Datathon.git
+cd Datathon
 pip install -r requirements.txt
 ./run.sh
 ```
@@ -135,4 +137,4 @@ Conservative lower bound of the 5-25x range from Bain & Company / HBR research o
 
 ## 👥 Team
 
-Built for The Product Rescue Mission Datathon 2025.
+Built for The Product Rescue Mission Datathon 2026.
