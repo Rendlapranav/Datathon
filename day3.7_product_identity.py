@@ -167,3 +167,20 @@ result = {
 with open(OUT_JSON, "w") as f:
     json.dump(result, f, indent=2)
 print(f"\nSaved -> {OUT_JSON}")
+
+# -- Patch resolved brand/title back into competitor_products.csv --------
+# day3.5_competitor_benchmark.py (and the dashboard's Competitor Benchmark
+# tab) read brand names straight from this CSV, not from product_identity
+# .json — without this, they'd keep showing "Unknown" even after we just
+# resolved real brand names above. Run this BEFORE day3.5 in the pipeline
+# so the benchmark picks up the resolved names.
+by_id = {flagship_identity["product_id"]: flagship_identity}
+by_id.update({c["product_id"]: c for c in competitors})
+for idx, row in products_df.iterrows():
+    ident = by_id.get(row["product_id"])
+    if ident:
+        products_df.at[idx, "brand"] = ident["brand"]
+        if ident.get("title"):
+            products_df.at[idx, "title"] = ident["title"]
+products_df.to_csv(os.path.join(DATA_DIR, "competitor_products.csv"), index=False)
+print(f"Patched resolved brand/title into competitor_products.csv")

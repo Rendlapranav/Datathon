@@ -191,6 +191,30 @@ The old semantic search box reloaded the whole sentence-transformer model from s
 
 ---
 
+## 📸 Screenshots
+
+Live dashboard, running against the real flagship product discovered by this run (Senso Headphones).
+
+**Executive Summary** — the CEO landing page: product identity, competitors, AI-generated complaint summary, and the bottom-line recommendation, all in one screen.
+![Executive Summary](screenshots/executive_summary.png)
+
+**Priority Matrix & Roadmap** — frequency vs. emotional intensity, the strategic roadmap table, and the interactive ROI calculator.
+![Priority Matrix](screenshots/priority_matrix.png)
+
+**Emotion Deep Dive** — anger vs. disappointment per aspect.
+![Emotional Pain by Aspect](screenshots/emotion_pain_by_aspect.png)
+
+**Voice of Customer** — auto-extracted representative quotes, grounding the AI findings in actual customer language.
+![Voice of Customer](screenshots/voice_of_customer.png)
+
+**Advanced ML Analytics** — the XGBoost churn classifier (honest AUROC after fixing the label-leakage bug) and Isolation Forest anomaly detection.
+![ML Analytics — Churn + Anomalies](screenshots/ml_analytics_churn.png)
+
+**Advanced ML Analytics (cont.)** — the Query Copilot (semantic search + synthesized insight) and the 6-month sentiment forecast.
+![ML Analytics — Forecast + Query Copilot](screenshots/ml_analytics_forecast_copilot.png)
+
+---
+
 ## 🧠 Model Justifications
 
 **Why RoBERTa over VADER?**

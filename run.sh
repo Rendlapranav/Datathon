@@ -15,7 +15,13 @@ if [ ! -f "data/clean/subcategory_sample.csv" ]; then
     python3 setup_scripts/stream_data.py
 fi
 
-# 2. Run the pipeline step-by-step
+# 2. Resolve product identity FIRST (brand/title for flagship + competitors) —
+# must run before the competitor benchmark so it picks up resolved names
+# instead of "Unknown"
+echo "🏷️ Resolving product identity..."
+python3 day3.7_product_identity.py
+
+# 3. Run the pipeline step-by-step
 echo "🔍 Running RoBERTa sentiment analysis..."
 python3 day1_roberta_sentiment.py
 
@@ -37,9 +43,6 @@ python3 day3.5_competitor_benchmark.py
 
 echo "🤖 Generating AI complaint summary..."
 python3 day3.6_ai_complaint_summary.py
-
-echo "🏷️ Resolving product identity..."
-python3 day3.7_product_identity.py
 
 echo "✅ Backend processing complete!"
 
