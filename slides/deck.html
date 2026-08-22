@@ -444,21 +444,22 @@
 
       <div class="grid-3 fade-up-2">
         <div class="metric-box danger">
-          <div class="metric-value val-danger">8.4%</div>
+          <div class="metric-value val-danger">8.1%</div>
           <div class="metric-label">Silent Killer Rate</div>
         </div>
         <div class="metric-box danger">
-          <div class="metric-value val-danger">$173K</div>
+          <div class="metric-value val-danger">$207K</div>
           <div class="metric-label">Revenue at Risk</div>
         </div>
         <div class="metric-box success">
-          <div class="metric-value val-success">50k+</div>
-          <div class="metric-label">Reviews Analyzed (Electronics)</div>
+          <div class="metric-value val-success">5,000</div>
+          <div class="metric-label">Reviews Analyzed (Flagship, Electronics)</div>
         </div>
       </div>
       <div class="fade-up-3" style="margin-top: 3rem; color: var(--text-muted); font-size: 0.9rem; max-width: 600px;">
         Powered by transformer-based NLP (RoBERTa), BERTopic modeling, and UMAP clustering to decode the emotions behind
-        the text.
+        the text. Flagship product auto-discovered as the single largest-reviewed Electronics product in the scan —
+        a Bluetooth headphones/earbuds product, brand Senso.
       </div>
     </div>
 
@@ -501,7 +502,7 @@
       <div class="fade-up-1">
         <span class="badge badge-danger">Hidden Dissatisfaction</span>
         <h2>Unmasking the <span class="gradient-text-red">Silent Killers</span></h2>
-        <p class="subtitle">420 customers left 4-5★ reviews, yet their textual language screams anger and frustration.
+        <p class="subtitle">228 customers left 4-5★ reviews, yet their textual language screams anger and frustration.
           These are your Silent Killers.</p>
       </div>
 
@@ -509,10 +510,10 @@
         <div>
           <div
             style="font-size: 8rem; font-weight: 900; line-height: 1; color: var(--accent-red); margin-bottom: 1rem; text-shadow: 0 0 30px rgba(255,51,102,0.4);">
-            420</div>
+            228</div>
           <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">Detected Silent Killers</h3>
           <p style="color: var(--text-muted); font-size: 1.2rem; line-height: 1.6;">
-            Representing <strong>8.4%</strong> of our user base. They churn without ever filing a support ticket. They
+            Representing <strong>8.1%</strong> of our user base. They churn without ever filing a support ticket. They
             leave no trace in the CRM — they only exist in the NLP signals.
           </p>
         </div>
@@ -548,26 +549,27 @@
         <div class="glass-card">
           <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--accent-red);">Critical Finding</h3>
           <p style="font-size: 1.15rem; color: #E2E8F0; line-height: 1.6; margin-bottom: 2rem;">
-            <strong>Battery & Charging</strong> has the highest emotional intensity. It appears in 11.4% of all reviews,
-            and the dominant emotion isn't just disappointment—it is <strong>Anger</strong>.
+            <strong>Battery & Charging</strong> has the highest anger signal of any aspect and is our top fix target.
+            It appears in 26.0% of all reviews — the single most-discussed feature — and carries meaningfully more
+            <strong>Anger</strong> than Sound Quality or Comfort & Fit.
           </p>
 
           <h4
             style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-size: 0.85rem;">
-            Emotion Distribution</h4>
+            Emotion Distribution (Battery & Charging)</h4>
           <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
             <div style="width: 15%; font-weight: bold; color: var(--accent-red);">Anger</div>
             <div style="flex-grow: 1; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
-              <div style="width: 1.2%; height: 100%; background: var(--accent-red);"></div>
+              <div style="width: 4.6%; height: 100%; background: var(--accent-red);"></div>
             </div>
-            <div style="width: 15%; text-align: right;">1.2%</div>
+            <div style="width: 15%; text-align: right;">4.6%</div>
           </div>
           <div style="display: flex; gap: 1rem;">
-            <div style="width: 15%; font-weight: bold; color: var(--accent-yellow);">Sadness</div>
+            <div style="width: 15%; font-weight: bold; color: var(--accent-yellow);">Disappointment</div>
             <div style="flex-grow: 1; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
-              <div style="width: 11.4%; height: 100%; background: var(--accent-yellow);"></div>
+              <div style="width: 17.3%; height: 100%; background: var(--accent-yellow);"></div>
             </div>
-            <div style="width: 15%; text-align: right;">11.4%</div>
+            <div style="width: 15%; text-align: right;">17.3%</div>
           </div>
         </div>
       </div>
@@ -584,25 +586,31 @@
 
       <div class="grid-2 fade-up-2">
         <div class="glass-card">
-          <h3 style="margin-bottom: 1.5rem; color: var(--primary);">Top 3 Immediate Fixes</h3>
-
-          <div style="border-left: 3px solid var(--accent-red); padding-left: 1rem; margin-bottom: 1.5rem;">
-            <h4 style="font-size: 1.2rem; color: white;">1. Battery & Charging (URGENT)</h4>
-            <p style="color: var(--text-muted); font-size: 0.95rem;">11.4% Frequency · 0.40 Intensity<br>Root
-              hardware/firmware failure. Highest churn driver.</p>
-          </div>
+          <h3 style="margin-bottom: 1.5rem; color: var(--primary);">The 3 Aspects, Ranked</h3>
 
           <div style="border-left: 3px solid var(--accent-yellow); padding-left: 1rem; margin-bottom: 1.5rem;">
-            <h4 style="font-size: 1.2rem; color: white;">2. Connectivity (MID)</h4>
-            <p style="color: var(--text-muted); font-size: 0.95rem;">7.0% Frequency · 0.16 Intensity<br>Bluetooth
-              pairing drops on Android.</p>
+            <h4 style="font-size: 1.2rem; color: white;">1. Sound Quality</h4>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">59.6% Frequency · 0.11 Intensity<br>The most
+              talked-about feature by far, but the lowest emotional charge — a marketing/expectation gap, not a
+              core failure.</p>
+          </div>
+
+          <div style="border-left: 3px solid var(--accent-red); padding-left: 1rem; margin-bottom: 1.5rem;">
+            <h4 style="font-size: 1.2rem; color: white;">2. Battery & Charging</h4>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">26.0% Frequency · 0.22 Intensity · highest
+              Anger of the three<br>Our ROI simulation target — fixing this alone recovers $206,543 in ARR.</p>
           </div>
 
           <div style="border-left: 3px solid var(--primary); padding-left: 1rem;">
-            <h4 style="font-size: 1.2rem; color: white;">3. Sound Quality Perception</h4>
-            <p style="color: var(--text-muted); font-size: 0.95rem;">High Frequency · Low Intensity<br>A marketing
-              expectation gap, not a critical hardware failure.</p>
+            <h4 style="font-size: 1.2rem; color: white;">3. Comfort & Fit</h4>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">14.4% Frequency · 0.26 Intensity (highest of
+              the three)<br>Lower volume, but the most emotionally charged complaint per mention.</p>
           </div>
+
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 1.5rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+            None of the three crossed the "Urgent Redesign" intensity bar this run — genuinely good news: this
+            product has expectation-gap issues to close, not a five-alarm hardware fire.
+          </p>
         </div>
 
         <div class="viz-container">
@@ -618,68 +626,121 @@
         <span class="badge badge-success"
           style="background: rgba(6,214,160,0.15); color: #06D6A0; border: 1px solid rgba(6,214,160,0.3);">Business
           Pitch</span>
-        <h2>The 90-Day <span class="gradient-text-green">Rescue Plan</span></h2>
+        <h2>The Mid-Term <span class="gradient-text-green">Rescue Plan</span></h2>
         <p class="subtitle">Translating complex AI metrics into actionable business directives to recover revenue and
-          brand sentiment.</p>
+          brand sentiment. No aspect crossed the urgent-fix threshold this run, so all three land in a 3-6 month
+          window — sequenced by ROI, not emergency.</p>
       </div>
 
       <div class="grid-3 fade-up-2">
         <div class="glass-card" style="border-top: 4px solid var(--accent-red);">
           <div
             style="font-weight: 800; color: var(--accent-red); letter-spacing: 1px; margin-bottom: 0.5rem; font-size: 0.85rem;">
-            DAYS 0-30</div>
-          <h3 style="font-size: 1.4rem; margin-bottom: 1rem;">Firmware & QA Overlay</h3>
+            PRIORITY 1 · HIGHEST ANGER</div>
+          <h3 style="font-size: 1.4rem; margin-bottom: 1rem;">Battery & Charging — UX/Design Improvement</h3>
           <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.5;">
-            Push an immediate firmware update for power management. Implement a strict 200-cycle charge test QA gate
-            before shipping new inventory. Add in-app push notifications for low battery.
+            26.0% of reviews, and the highest anger signal of any aspect. ROI simulation target: fixing this alone
+            recovers <strong>$206,543</strong> in ARR and lifts overall sentiment by <strong>+38.6%</strong>.
           </p>
         </div>
 
         <div class="glass-card" style="border-top: 4px solid var(--accent-yellow);">
           <div
             style="font-weight: 800; color: var(--accent-yellow); letter-spacing: 1px; margin-bottom: 0.5rem; font-size: 0.85rem;">
-            DAYS 30-60</div>
-          <h3 style="font-size: 1.4rem; margin-bottom: 1rem;">Bluetooth Stack Patch</h3>
+            PRIORITY 2 · HIGHEST INTENSITY</div>
+          <h3 style="font-size: 1.4rem; margin-bottom: 1rem;">Comfort & Fit — Marketing / Tutorial Content</h3>
           <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.5;">
-            Deploy dedicated engineering resources to patch the Android Bluetooth connectivity stack. Resolves the
-            secondary source of mid-tier frustration and multi-device switching drops.
+            Lower volume (14.4%) but the most emotionally charged complaint per mention (0.26 combined
+            anger+disappointment). Sizing/fit guidance content addresses this without an engineering change.
           </p>
         </div>
 
         <div class="glass-card" style="border-top: 4px solid var(--primary);">
           <div
             style="font-weight: 800; color: var(--primary); letter-spacing: 1px; margin-bottom: 0.5rem; font-size: 0.85rem;">
-            DAYS 60-90</div>
-          <h3 style="font-size: 1.4rem; margin-bottom: 1rem;">Value Re-alignment</h3>
+            PRIORITY 3 · HIGHEST VOLUME</div>
+          <h3 style="font-size: 1.4rem; margin-bottom: 1rem;">Sound Quality — UX/Design Improvement</h3>
           <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.5;">
-            Launch a targeted marketing campaign. Produce tutorial content and competitor comparison pages to adjust
-            consumer expectations on sound profiles—requiring zero engineering cost.
+            The most-discussed aspect by far (59.6% of reviews) but the lowest emotional charge — an expectation
+            gap versus the competitive set, not a core hardware failure.
           </p>
         </div>
       </div>
     </div>
 
-    <!-- SLIDE 7: ROI -->
+    <!-- SLIDE 7: Competitor Benchmark -->
+    <div class="slide">
+      <div class="fade-up-1">
+        <span class="badge badge-info">Competitive Intelligence</span>
+        <h2>Stars Say <span class="gradient-text-red">"Fine."</span> Sentiment Says Otherwise.</h2>
+        <p class="subtitle">We auto-discover the flagship's direct competitors — same category, same product
+          type, different brand — and score them with the identical RoBERTa model. Two products can post the
+          same star average while one quietly bleeds customers.</p>
+      </div>
+
+      <div class="grid-2 fade-up-2">
+        <div class="glass-card">
+          <h3 style="color: var(--primary); margin-bottom: 1.5rem;">How the Benchmark Works</h3>
+          <ul class="custom-list">
+            <li><strong>Discovery:</strong> Competitors ranked by review volume within the flagship's category
+              (streamed — no full dataset download)</li>
+            <li><strong>Scoring:</strong> Same multilingual RoBERTa model, no translation needed for sentiment</li>
+            <li><strong>Fair bar:</strong> One shared Silent Killer threshold across flagship + competitors,
+              pooled — nobody grades their own homework</li>
+            <li><strong>Output:</strong> Star rating vs. real sentiment, side by side, per competitor</li>
+          </ul>
+        </div>
+
+        <div class="glass-card">
+          <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: var(--accent-yellow);">This Run's Result</h3>
+          <p style="color: #E2E8F0; line-height: 1.6; margin-bottom: 1.5rem; font-size: 1.05rem;">
+            Against <strong>3 same-type competitors</strong>, the flagship trails on <strong>both</strong> metrics —
+            not just the one management already sees:
+          </p>
+          <div class="metric-box danger" style="background: rgba(255,51,102,0.08); margin-bottom: 0.75rem;">
+            <div class="metric-label">Stars</div>
+            <div style="font-size: 1.1rem; margin-top: 0.5rem; font-weight: 500;">
+              3.84★ (flagship) vs <strong>4.40★</strong> (competitor avg)
+            </div>
+          </div>
+          <div class="metric-box danger" style="background: rgba(255,51,102,0.08);">
+            <div class="metric-label">Real Sentiment (RoBERTa)</div>
+            <div style="font-size: 1.1rem; margin-top: 0.5rem; font-weight: 500;">
+              0.217 (flagship) vs <strong>0.411</strong> (competitor avg) — the gap is proportionally larger than
+              stars alone suggest.
+            </div>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 1rem;">
+            Live in the <strong>📊 Competitor Benchmark</strong> dashboard tab, regenerated from
+            <code>competitor_comparison.csv</code> every pipeline run — plus the new <strong>Query Copilot</strong>
+            (ask "battery dies too fast", get matched reviews + a synthesized sentiment/aspect summary).
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 8: ROI -->
     <div class="slide">
       <div class="fade-up-1">
         <span class="badge badge-info">Executive Summary</span>
         <h2>Expected <span class="gradient-text-green">ROI & Impact</span></h2>
-        <p class="subtitle">Fixing the targeted issues addresses 25.5% of all negative reviews by volume and neutralizes
-          the two highest-anger complaint clusters.</p>
+        <p class="subtitle">Fixing Battery & Charging — the highest-anger aspect — is the single highest-leverage
+          move available, backed by an XGBoost churn model (AUROC 0.80) trained honestly on signals other than the
+          stars/sentiment used to flag the problem in the first place.</p>
       </div>
 
       <div class="grid-3 fade-up-2" style="margin-top: 4rem;">
         <div class="glass-card" style="text-align: center; padding: 4rem 2rem;">
-          <div class="metric-value val-success" style="font-size: 4.5rem; margin-bottom: 1rem;">$173K</div>
+          <div class="metric-value val-success" style="font-size: 4.5rem; margin-bottom: 1rem;">$207K</div>
           <div style="font-size: 1.1rem; color: var(--text-muted); font-weight: 600;">Max Revenue Recoverable (ARR)
           </div>
         </div>
         <div class="glass-card" style="text-align: center; padding: 4rem 2rem;">
-          <div class="metric-value val-primary" style="font-size: 4.5rem; margin-bottom: 1rem;">+52.9%</div>
+          <div class="metric-value val-primary" style="font-size: 4.5rem; margin-bottom: 1rem;">+38.6%</div>
           <div style="font-size: 1.1rem; color: var(--text-muted); font-weight: 600;">Brand Sentiment Lift</div>
         </div>
         <div class="glass-card" style="text-align: center; padding: 4rem 2rem;">
-          <div class="metric-value val-success" style="font-size: 4.5rem; margin-bottom: 1rem;">420</div>
+          <div class="metric-value val-success" style="font-size: 4.5rem; margin-bottom: 1rem;">228</div>
           <div style="font-size: 1.1rem; color: var(--text-muted); font-weight: 600;">Silent Killers Retained</div>
         </div>
       </div>

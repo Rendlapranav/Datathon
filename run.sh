@@ -9,6 +9,12 @@ echo "🚀 Starting backend processing pipeline..."
 echo "📦 Installing dependencies..."
 pip install -r requirements.txt -q
 
+# 1.5 Stream the dataset (flagship + competitor discovery) if not already present
+if [ ! -f "data/clean/subcategory_sample.csv" ]; then
+    echo "📡 Discovering flagship product + competitors from HuggingFace..."
+    python3 setup_scripts/stream_data.py
+fi
+
 # 2. Run the pipeline step-by-step
 echo "🔍 Running RoBERTa sentiment analysis..."
 python3 day1_roberta_sentiment.py
@@ -22,6 +28,18 @@ python3 day2_aspects.py
 
 echo "💼 Running business logic..."
 python3 day3_business_logic.py
+
+echo "🤖 Running ML model suite (XGBoost churn, anomaly, forecast, semantic search)..."
+python3 day4_ml_models.py
+
+echo "📊 Running competitor benchmark..."
+python3 day3.5_competitor_benchmark.py
+
+echo "🤖 Generating AI complaint summary..."
+python3 day3.6_ai_complaint_summary.py
+
+echo "🏷️ Resolving product identity..."
+python3 day3.7_product_identity.py
 
 echo "✅ Backend processing complete!"
 

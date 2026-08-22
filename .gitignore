@@ -12,6 +12,9 @@ huggingface/
 *.safetensors
 *.pt
 
+# === RUN LOGS (scratch output from manual/local runs) ===
+*.log
+
 # === PYTHON ===
 __pycache__/
 *.py[cod]

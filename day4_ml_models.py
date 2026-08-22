@@ -61,14 +61,26 @@ print("\n" + "=" * 60)
 print("MODEL 1: XGBoost Churn Risk Classifier")
 print("=" * 60)
 
-FEATURES = [
-    "star_rating", "helpful_votes", "verified_purchase",
-    "prob_negative", "prob_neutral", "prob_positive",
-    "emo_anger", "emo_sadness", "emo_joy",
-    "review_length", "star_normalized", "star_gap",
-]
-
 TARGET = "is_silent_killer"
+
+# is_silent_killer is DEFINED (in day1_roberta_sentiment.py) as:
+#   (star_rating >= 4) & (prob_negative > prob_positive) & (prob_negative >= threshold)
+# so star_rating, prob_negative, prob_positive — and anything derived from
+# them (star_normalized, star_gap, and prob_neutral via the prob_* sum-to-1
+# constraint) — leak the label directly into the features. Training on
+# them doesn't produce a predictive model, it produces a classifier that
+# re-derives its own label formula (this is exactly why an earlier run
+# scored a suspicious AUROC/F1/Precision/Recall of 1.0000 with a perfect
+# confusion matrix). The features below are the ones that don't
+# tautologically encode the label — helpful_votes, verified_purchase,
+# review_length, and the emotion probabilities are legitimate signals the
+# whole "Silent Killer" premise is looking for: frustration that shows up
+# somewhere OTHER than the stars/sentiment score used to define it.
+FEATURES = [
+    "helpful_votes", "verified_purchase",
+    "emo_anger", "emo_sadness", "emo_joy",
+    "review_length",
+]
 
 feat_cols = [f for f in FEATURES if f in df.columns]
 clf_df = df[feat_cols + [TARGET]].dropna().copy()
@@ -94,14 +106,18 @@ X_train, X_test, y_train, y_test = train_test_split(
 # Try XGBoost first, fall back to RandomForest
 try:
     import xgboost as xgb
+    n_pos = (y == 1).sum()
+    n_neg = (y == 0).sum()
+    spw = (n_neg / n_pos) if n_pos > 0 else 1.0  # handle imbalance; avoid div-by-zero when no positives
     clf = xgb.XGBClassifier(
         n_estimators=300,
         max_depth=5,
         learning_rate=0.05,
         subsample=0.8,
         colsample_bytree=0.8,
-        scale_pos_weight=(y == 0).sum() / (y == 1).sum(),  # handle imbalance
-        use_label_encoder=False,
+        scale_pos_weight=spw,
+        # NOTE: use_label_encoder was removed in xgboost>=2.0 and raises
+        # TypeError if passed. Do not re-add it.
         eval_metric="logloss",
         random_state=42,
         n_jobs=-1,
@@ -134,7 +150,9 @@ print(f"  Recall    : {rec:.4f}")
 print(f"  Confusion Matrix:\n{cm}")
 
 # Cross-validation for robust estimate
-cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+# n_splits must not exceed the smallest class count, or StratifiedKFold raises.
+n_splits = max(2, min(5, n_pos, n_neg))
+cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 cv_scores = []
 for tr, va in cv.split(X, y):
     clf_cv = type(clf)(**clf.get_params())

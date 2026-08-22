@@ -1,0 +1,298 @@
+EXECUTION NOTES — Product Rescue Mission pipeline run
+======================================================
+Running log of problems hit while actually executing the pipeline on this
+machine (not just writing the code), and what was done about each one.
+Updated as the run progresses.
+
+ENVIRONMENT
+-----------
+- No Python was installed on this machine at all. Installed Python 3.12.10
+  via `winget install Python.Python.3.12`, then created a venv in
+  .venv/ and installed requirements.txt into it (~5-10 min, ~2GB of
+  packages: torch, transformers, bertopic, xgboost, streamlit, etc).
+- Disk space was never actually a constraint (333GB free throughout) —
+  worth knowing so later "efficiency" asks are correctly scoped to
+  network/CPU/reliability rather than disk.
+
+BUGS FOUND ONLY BY RUNNING THE CODE (not visible from reading it)
+-------------------------------------------------------------------
+1. setup_scripts/stream_data.py — load_dataset() call was missing the
+   dataset repo ID. Constants were refactored to CATEGORY_CONFIG /
+   META_CONFIG but the actual `load_dataset(CATEGORY_CONFIG, ...)` calls
+   only passed the config name as the first positional arg, which
+   HuggingFace's `datasets` interprets as the repo path — so it looked
+   for a dataset literally named "raw_review_Electronics" and failed
+   with DatasetNotFoundError. Fix: added DATASET_REPO =
+   "McAuley-Lab/Amazon-Reviews-2023" and passed both
+   (DATASET_REPO, CATEGORY_CONFIG) positionally. This is exactly the
+   kind of bug that only shows up at actual execution time — static
+   review missed it.
+
+2. xgboost's `use_label_encoder=False` param (already removed in the
+   earlier code-review pass, before this run) — confirmed xgboost 2.1.3
+   installs and trains cleanly without it.
+
+DIFFICULTIES / SLOW STEPS AND HOW THEY WERE ADDRESSED
+--------------------------------------------------------
+1. Metadata (brand/category) lookup pass was the single biggest time
+   sink. The Electronics metadata config has no ordering relationship to
+   review-count popularity, so finding a specific ~50 target ASINs in it
+   meant scanning a large, effectively random fraction of ~1.6M records.
+   Measured throughput: ~1,000-1,200 rows/sec with frequent HTTP read
+   timeouts, vs ~6,000 rows/sec on the review stream. A first attempt
+   with a 2,000,000-row cap ran for over 80 minutes and still hadn't
+   finished (stalled hard around 15-21% multiple times).
+   FIX: made the metadata pass optional and OFF by default
+   (PRM_FETCH_META=1 to opt in), and stopped depending on it for
+   anything functional. Product type (used to pick same-type
+   competitors) is now derived straight from review text instead — see
+   #3 below. Brand name is still nice-to-have display info from
+   metadata when enabled, but nothing breaks without it.
+
+2. Three separate streaming passes over the review data (count, then a
+   second full pass to collect rows for the winners) doubled network
+   exposure on an already-flaky connection.
+   FIX: merged counting and row-collection into ONE pass. Insight: total
+   buffered memory is bounded by MAX_SCAN regardless of how rows are
+   distributed across ASINs (buffering unevenly costs no more than
+   buffering evenly — the total can never exceed rows scanned), so there
+   was no memory reason to defer collection to a second pass. This cut
+   review-stream network passes from 2 down to 1.
+
+3. First product-type detection attempt only checked the FIRST review
+   seen for a given ASIN, extracting a keyword like "earbuds" or
+   "charger" from its title+text. This produced a wrong result on the
+   real data: the flagship's type was detected as "charger" when the
+   product is actually Bluetooth headphones/earbuds — one early review
+   happened to mention "charger" incidentally (e.g. complaining about
+   charging) before any review mentioning "headphones" was seen, and the
+   first-hit-wins logic locked that in permanently.
+   FIX: switched to a majority vote across every buffered review for a
+   candidate ASIN (only needed for the ~50 top candidates, done AFTER
+   the streaming pass from data already in memory — no extra network
+   cost). Verified against the real data: correctly resolved to
+   "headphone" this time, and competitor selection produced sensible
+   type-matched candidates.
+
+4. The HuggingFace connection from this machine has been unreliable
+   throughout — intermittent multi-minute read timeouts against both
+   huggingface.co and its AWS CDN edge (us.aws.cdn.hf.co), sometimes
+   recovering in seconds, once stalling for over an hour before a
+   backlog cleared. This is an external network condition, not
+   something fixable in our code. Two things helped:
+     - Fewer passes (see #2) means less total exposure to a bad
+       connection.
+     - Installed `hf_xet` (added to requirements.txt) for the model
+       downloads (RoBERTa, translation model, etc.) — HuggingFace's Xet
+       storage backend does chunked, deduplicated, resumable transfer
+       instead of a single large HTTP GET, which is much more tolerant
+       of a flaky connection. Day 1's ~1.1GB RoBERTa model failed
+       repeatedly on the plain-HTTP path before hf_xet was installed,
+       then downloaded cleanly right after.
+   There is no code-side fix for the network itself — if a run stalls
+   for a very long time with no progress, the right move is to check
+   `Get-Process python` for CPU usage (confirms it's actually working
+   vs. truly stuck) rather than assume it's broken.
+
+5. Day 4's XGBoost churn classifier scored a suspicious AUROC / F1 /
+   Precision / Recall of 1.0000 with a PERFECT confusion matrix
+   ([[821,0],[0,82]]) on the first real run. That is not a good model —
+   it is a red flag for data leakage. Root cause: `is_silent_killer`
+   (the target) is DEFINED in day1_roberta_sentiment.py as a formula
+   built directly from star_rating, prob_negative, and prob_positive —
+   and all three of those (plus star_normalized and star_gap, which are
+   deterministic functions of them) were also in the classifier's
+   FEATURES list. The model wasn't predicting anything; it was just
+   re-deriving the exact rule that generated its own label — a
+   tautology dressed up as a classifier. This would have been an
+   embarrassing thing to present to judges as "98%+ accurate churn
+   prediction."
+   FIX: removed star_rating, star_normalized, star_gap, prob_negative,
+   prob_neutral, prob_positive from FEATURES entirely. Left:
+   helpful_votes, verified_purchase, emo_anger, emo_sadness, emo_joy,
+   review_length — signals that don't tautologically encode the label,
+   and which fit the actual "Silent Killer" premise (frustration
+   visible somewhere OTHER than stars/sentiment). Re-ran: AUROC dropped
+   to a realistic 0.8015 (5-fold CV: 0.7805 +/- 0.0169), F1 0.3482,
+   precision 0.2746, recall 0.4756 — a genuine, presentable, honestly-
+   earned result instead of a leaked one. Top features by importance
+   are now emo_joy, emo_sadness, review_length — exactly the kind of
+   "hidden signal" story this project is supposed to be telling.
+   This is the single most important thing this execution pass caught:
+   it was invisible from reading the code (the leak is a cross-file
+   relationship between how day1 builds the label and how day4 builds
+   its feature list) and only surfaced because the metrics were
+   actually inspected after a real run, not assumed correct because the
+   script exited 0.
+
+RESULT SO FAR (for context on later steps)
+---------------------------------------------
+- Flagship product discovered: ASIN B01G8JO5F2, 5,007 reviews scanned
+  (5,000 sampled) — a Bluetooth headphones/earbuds product, review text
+  confirms brand name "Senso". This is NOT a JBL product — worth
+  flagging since the request assumed JBL. Cochran's minimum for 95% CI /
+  +/-5% MoE was 384 reviews, so 5,007 clears it comfortably.
+- 3 competitors found (same detected type "headphone", different brand
+  where knowable): B07S764D9V (1,063 reviews), B07CJYMRWM (893),
+  B07PXGQC1Q (251).
+- Day 1 (RoBERTa sentiment) ran cleanly: model sanity check passed
+  (93.5% of 1-star reviews called Negative, 90.9% of 5-star called
+  Positive — both above the README's expected thresholds). 420 Silent
+  Killers detected (8.4%), $389,429 weighted revenue at risk, Pearson r
+  = 0.764 between stars and sentiment.
+- Day 1.5 (translation) ran cleanly: 235/5,000 reviews were non-English
+  across 24 languages, translated with Helsinki-NLP/opus-mt-mul-en. The
+  multilingual detection/translation step was kept intact as requested
+  — not simplified or removed.
+
+FULL PIPELINE RUN — COMPLETED
+----------------------------------
+All steps ran end to end against real HuggingFace data:
+- Day 2 (BERTopic + emotion detection): 3 aspects surfaced — Sound
+  Quality, Battery & Charging, Comfort & Fit. Sensible for a headphones
+  product.
+- Day 3 (business logic): 2,812 topic-labeled reviews, 228 Silent
+  Killers in that subset, $206,543 revenue at risk, roadmap generated.
+- Day 4 (XGBoost etc.) — see leakage bug + fix above. Final honest
+  metrics: AUROC 0.8015 (5-fold CV 0.7805 +/- 0.0169), F1 0.3482,
+  Precision 0.2746, Recall 0.4756. Isolation Forest found 7 anomalous
+  months out of 70. 6-month sentiment forecast generated. Semantic
+  search index built (2,000 reviews, 384-dim embeddings).
+- Day 3.5 (competitor benchmark): scored 2,207 competitor reviews with
+  the same RoBERTa model. Result: flagship trails all 3 competitors on
+  both stars (3.84 vs ~4.4 avg) AND real sentiment (0.217 vs ~0.41 avg)
+  — the sentiment gap (-0.194) is proportionally larger than the star
+  gap (-0.56 on a 5-point scale) would suggest, which is exactly the
+  "stars don't tell the whole story" story this benchmark exists to
+  tell.
+- Dashboard smoke test: launched `streamlit run gui/app.py` headlessly,
+  confirmed HTTP 200 + healthy `/_stcore/health`, no errors/tracebacks
+  in the log. Streamlit executes the full script (all 7 tabs, since
+  tabs aren't lazy-loaded) on every page load, so this confirms the new
+  Competitor Benchmark tab renders without error against real data.
+  Separately ran the Query Copilot's semantic search logic directly
+  (the part gated behind text input, which a plain page load doesn't
+  exercise): searched "the battery dies too fast" and got genuinely
+  relevant results (all 6 top matches were explicitly about battery
+  life) with correct insight synthesis (avg sentiment 0.071, avg star
+  3.83, 0% Silent Killer rate in that match set).
+
+IMPORTANT CORRECTION TO AN EARLIER ASSUMPTION
+--------------------------------------------------
+The request assumed the discovered flagship product would be JBL. It is
+NOT. The actual data-driven result is ASIN B01G8JO5F2, a Bluetooth
+headphones/earbuds product from a brand called "Senso" (confirmed by
+review text mentioning the brand name directly, e.g. "the ear Senso
+buds would simply turn off on it's own"). This is the honest output of
+actually running the flagship-discovery logic against real Amazon
+Electronics review data — reporting it accurately here rather than
+forcing the JBL assumption.
+
+CLEANUP / HOUSEKEEPING
+---------------------------
+- Added *.log to .gitignore and removed the scratch debug logs from the
+  repo root (stream_data*.log, day*.log, pip_install.log, streamlit.log)
+  — this file supersedes them narratively; they were only useful during
+  live debugging.
+- README.md and slides/deck.html were updated with the REAL numbers from
+  this run (previously they carried placeholder/example figures from an
+  earlier, differently-scoped pipeline). Notably, the real Priority
+  Matrix result differs from the old placeholder narrative: none of the
+  3 discovered aspects (Sound Quality, Battery & Charging, Comfort &
+  Fit) crossed the "Urgent Redesign" intensity threshold this run, and
+  there is no "Connectivity" aspect in this product's real data — both
+  slides and README were rewritten to reflect that honestly rather than
+  keep the old invented urgency framing.
+
+ROUND 2: CEO-CENTRIC DASHBOARD + PRODUCT IDENTITY + AI SUMMARIES
+---------------------------------------------------------------------
+Follow-up request: name the product/brand, name competitors, note any
+other products from the same company, add an AI-generated summary of
+raw complaints, and restructure the dashboard to lead with business
+content instead of methodology — with a dedicated summary page.
+
+New scripts:
+- day3.6_ai_complaint_summary.py — summarizes negative/Silent-Killer
+  reviews per aspect (and overall) with sshleifer/distilbart-cnn-12-6.
+- day3.7_product_identity.py — resolves brand/title for flagship +
+  competitors; prefers official metadata, falls back to a review-text
+  heuristic when metadata isn't available.
+- setup_scripts/fetch_metadata_targeted.py — one-off targeted metadata
+  lookup for just the 4 already-selected ASINs (not all 50 candidates,
+  which is what made the earlier metadata pass so slow).
+
+Bugs found (again, only by running it):
+1. day3.6's `build_corpus()` sorted candidate reviews longest-first and
+   `break`-ed the moment one review didn't fit the char budget. Since
+   the single longest review for "Sound Quality" (3,038 chars) exceeded
+   the 3,000-char budget on its own, and was tried FIRST, the loop broke
+   immediately and returned an empty corpus — silently producing no
+   summary for the aspect with the MOST complaints (519), and same root
+   cause zeroed out the "overall" summary too. Fixed: skip oversized
+   items instead of breaking, and if literally every candidate is too
+   long, truncate the shortest one rather than give up. Also switched
+   from "N longest reviews" to a length-filtered random sample (min 20
+   words) so the summary reflects the complaint set broadly instead of
+   being dominated by one or two verbose outliers.
+2. day3.7's brand-guessing heuristic first tried "most frequent
+   capitalized word" and confidently returned "Sound", "Very", "Love" —
+   sentence-initial capitalization, not brand names. Fixed by only
+   counting a capitalized word when it appears mid-sentence (not
+   preceded by `. `, `! `, `? `, or start-of-string) — genuine proper
+   nouns get capitalized mid-sentence too ("I love my Senso earbuds"),
+   generic words basically only get capitalized by starting a sentence.
+   After the fix: correctly resolved Senso (flagship), Panasonic and
+   Edifier (2 of 3 competitors — real, known audio brands). The 3rd
+   competitor's top candidates ("Siri", "Airpods") were just under the
+   2%-of-reviews confidence threshold and were, on inspection, genuine
+   competitor-comparison references ("I've bought knock off earbuds...
+   caved and decided to buy the Apple product") rather than the
+   product's own brand — left as "Unknown" rather than guessing wrong.
+3. Two NaN/placeholder inconsistencies: pandas round-trips an empty CSV
+   string back as NaN (float) on reload, which crashed an f-string
+   slice (`'float' object is not subscriptable`); separately, the
+   flagship's "no title" placeholder was `""` but the competitors' was
+   the literal string `"Unknown"` — an inconsistency that made `title =
+   official_title or guess_product_type(...)` silently keep "Unknown"
+   instead of falling through to the guess. Normalized both NaN and the
+   literal string "Unknown" to the same empty-string handling.
+
+Network note: the full targeted metadata lookup (4 specific ASINs) took
+over 20 minutes and still hadn't found a match at time of writing — same
+root cause as before (metadata stream order has no relation to which
+ASINs we want). The dashboard does NOT depend on this finishing: it
+already has good identity data (Senso / Panasonic / Edifier / Headphones)
+from the review-text fallback, and will silently pick up better data if
+the metadata lookup completes later and day3.7 gets re-run.
+
+Dashboard changes (gui/app.py):
+- New first tab "🏠 Executive Summary" — product identity, competitors,
+  sibling-product note, AI complaint summary (overall + per-aspect),
+  key metrics, and a one-line recommendation. This is the "summary page
+  with real insights" — it's the first tab, so it's what loads by
+  default.
+- Sidebar: replaced generic "Category: Consumer Electronics" with the
+  actual resolved product name; moved the "AI Model Stack" bullet list
+  into a collapsed expander so it doesn't compete with the Revenue-at-
+  Risk / Silent-Killer numbers for attention.
+- Hero section: the 6-step technical pipeline timeline (Data Ingestion →
+  ... → Strategic Roadmap) moved into a collapsed "See how this was
+  built" expander instead of being permanently visible.
+- Emotion Deep Dive tab: the active/discarded-emotion-signals caption
+  moved into a "Methodology" expander.
+- Advanced ML Analytics tab: added a one-line pointer back to the
+  Executive Summary tab for readers who land there first and want the
+  business framing instead of model internals.
+- run.ps1 / run.sh updated to include the two new steps (Day 3.6, 3.7)
+  in the default pipeline run. setup_scripts/fetch_metadata_targeted.py
+  is NOT part of the default run (too unreliable on this network) —
+  it's documented as an optional manual step.
+
+STATUS: FULL PIPELINE VALIDATED END TO END
+-----------------------------------------------
+Data discovery -> Day 1 -> Day 1.5 -> Day 2 -> Day 3 -> Day 4 -> Day 3.5
+-> dashboard all ran successfully against real data on this machine,
+with every bug found along the way fixed and re-verified (not just
+assumed fixed from the code diff). See the top-level summary message in
+the conversation for the full list of what changed and what to check
+before presenting.

@@ -273,6 +273,44 @@ def load_ml_data():
 
 ml_metrics, feat_imp, anomalies, forecast = load_ml_data()
 
+@st.cache_data
+def load_competitor_data():
+    comp_csv  = os.path.join(DATA_DIR, "competitor_comparison.csv")
+    comp_json = os.path.join(DATA_DIR, "competitor_summary.json")
+    comparison = pd.read_csv(comp_csv) if os.path.exists(comp_csv) else pd.DataFrame()
+    summary_j  = {}
+    if os.path.exists(comp_json):
+        with open(comp_json, "r") as f:
+            summary_j = json.load(f)
+    return comparison, summary_j
+
+competitor_comparison, competitor_summary = load_competitor_data()
+
+@st.cache_data
+def load_identity_and_ai_summary():
+    identity_path = os.path.join(DATA_DIR, "product_identity.json")
+    ai_summary_path = os.path.join(DATA_DIR, "ai_complaint_summary.json")
+    identity = {}
+    ai_summary = {}
+    if os.path.exists(identity_path):
+        with open(identity_path, "r") as f:
+            identity = json.load(f)
+    if os.path.exists(ai_summary_path):
+        with open(ai_summary_path, "r") as f:
+            ai_summary = json.load(f)
+    return identity, ai_summary
+
+identity, ai_summary = load_identity_and_ai_summary()
+flagship_identity = identity.get("flagship", {})
+flagship_brand = flagship_identity.get("brand", "Unknown")
+flagship_title = flagship_identity.get("title") or ""
+if flagship_brand not in ("Unknown", "") and flagship_title:
+    product_display_name = f"{flagship_brand} {flagship_title}"
+elif flagship_brand not in ("Unknown", ""):
+    product_display_name = f"{flagship_brand} product"
+else:
+    product_display_name = "the flagship product"
+
 df_valid = aspects_df[aspects_df["topic_id"] != -1].copy()
 df_valid["review_date"] = pd.to_datetime(df_valid["review_date"], errors="coerce")
 df_valid = df_valid.dropna(subset=["review_date"])
@@ -300,10 +338,9 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     st.markdown("---")
+    st.markdown(f"**Product:** {product_display_name}")
     st.markdown(f"**Category:** `Consumer Electronics`")
-    st.markdown(f"**Source:** Amazon Reviews 2023")
-    st.markdown(f"**Total Dataset:** `{summary.get('total_reviews', 49991):,}` reviews")
-    st.markdown(f"**Pipeline Sample:** `{summary.get('pipeline_sample', 4469):,}` (stratified)")
+    st.markdown(f"**Reviews Analyzed:** `{summary.get('total_reviews', 0):,}`")
     st.markdown("---")
     st.markdown("""
     <div style="background:rgba(255,76,76,0.08); border:1px solid rgba(255,76,76,0.2);
@@ -321,23 +358,22 @@ with st.sidebar:
         {sk_count:,}</div>
     </div>
     """.format(rar_total=rar_total, sk_count=sk_count), unsafe_allow_html=True)
-    st.markdown("---")
-    st.markdown("**🧠 AI Model Stack**")
-    st.caption("• XLM-RoBERTa → Sentiment scoring")
-    st.caption("• Helsinki-NLP → Multilingual translation")
-    st.caption("• BERTopic → Aspect mining")
-    st.caption("• mDeBERTa → Emotion detection")
-    st.caption("• XGBoost → Churn classification")
-    st.caption("• Isolation Forest → Anomaly detection")
-    st.caption("• Sentence-Transformers → Semantic search")
-    st.markdown("---")
     st.info(
         "**Silent Killer** — A 4-5★ reviewer whose text signals hidden anger. "
         "They churn silently, without filing a support ticket."
     )
-    src = financials.get("churn_multiplier_source", "")
-    if src:
-        st.caption(f"RAR basis: {src}")
+    with st.expander("⚙️ Technical stack (for the data team)"):
+        st.caption("• XLM-RoBERTa → Sentiment scoring")
+        st.caption("• Helsinki-NLP → Multilingual translation")
+        st.caption("• BERTopic → Aspect mining")
+        st.caption("• mDeBERTa → Emotion detection")
+        st.caption("• XGBoost → Churn classification")
+        st.caption("• Isolation Forest → Anomaly detection")
+        st.caption("• Sentence-Transformers → Semantic search")
+        st.caption("• DistilBART → AI complaint summarization")
+        src = financials.get("churn_multiplier_source", "")
+        if src:
+            st.caption(f"RAR basis: {src}")
 
 # -- Hero Screen --------------------------------------------------------
 # Dynamic hero numbers
@@ -354,7 +390,7 @@ else:
     hero_recovery = int(rar_total * 0.85)
 
 st.markdown('<div class="dash-title">Product Rescue Mission</div>', unsafe_allow_html=True)
-st.markdown('<div class="dash-subtitle">Electronics · Amazon Reviews 2023 · AI-Powered Business Intelligence</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="dash-subtitle">{product_display_name} · Electronics · AI-Powered Business Intelligence</div>', unsafe_allow_html=True)
 
 st.markdown(f"""
 <div class="hero-stat-grid">
@@ -378,7 +414,10 @@ st.markdown(f"""
 <div class="hero-tagline">
   &ldquo;Star ratings said everything was fine. Our AI found the truth.&rdquo;
 </div>
+""", unsafe_allow_html=True)
 
+with st.expander("See how this was built"):
+    st.markdown("""
 <div class="hero-timeline">
   <div class="timeline-step">Data Ingestion</div>
   <div class="timeline-arrow">&rarr;</div>
@@ -398,14 +437,107 @@ sk_rate   = (sk_count / total_rev * 100) if total_rev > 0 else 0
 sim_boost = sim.get('improvement_pct_high', 0)
 
 # -- Tabs ---------------------------------------------------------------
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    "🏠 Executive Summary",
     "🎯 Priority Matrix & Roadmap",
     "🧠 Emotion Deep Dive",
     "🗣️ Voice of Customer",
     "📈 Temporal Trend",
     "🔍 Silent Killer Drill-Down",
-    "🤖 Advanced ML Analytics"
+    "🤖 Advanced ML Analytics",
+    "📊 Competitor Benchmark",
 ])
+
+# ── Tab 0: Executive Summary ──────────────────────────────────────────
+with tab0:
+    st.subheader(f"🏠 {product_display_name}")
+    st.markdown(
+        "**What we did:** read every review of this product (and its direct competitors), "
+        "scored the real sentiment behind the words — not just the star rating — and found "
+        "customers who post 4-5★ reviews while their words signal quiet frustration. "
+        "**Why it matters for you:** stars alone would have told you this product is fine. "
+        "They're not telling you the whole story."
+    )
+
+    st.markdown("---")
+    id_col1, id_col2, id_col3 = st.columns(3)
+    with id_col1:
+        st.markdown("##### 📦 This Product")
+        st.markdown(f"**{product_display_name}**")
+        src = flagship_identity.get("brand_source", "")
+        if src and src != "metadata":
+            st.caption(f"Brand identified from review text ({src})")
+    with id_col2:
+        st.markdown("##### 🏢 Other Products From This Company")
+        siblings = identity.get("sibling_products", [])
+        if siblings:
+            for s in siblings:
+                st.markdown(f"- {s}")
+        else:
+            st.caption(identity.get("sibling_products_note",
+                       "None found in this scan — this appears to be a single-line seller."))
+    with id_col3:
+        st.markdown("##### ⚔️ Direct Competitors Benchmarked")
+        comps = identity.get("competitors", [])
+        if comps:
+            for c in comps:
+                st.markdown(f"- **{c.get('brand', 'Unknown')}**")
+        else:
+            st.caption("No competitor data available — run the pipeline's discovery step.")
+
+    st.markdown("---")
+    st.markdown("### The Numbers That Matter")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Revenue at Risk", f"${rar_total:,.0f}")
+    m2.metric("Silent Killer Rate", f"{sk_rate:.1f}%", help="Share of analyzed reviews flagged as hidden frustration")
+    comp_sent_gap = None
+    if competitor_summary.get("competitor_avg_sentiment") is not None:
+        comp_sent_gap = competitor_summary["flagship_avg_sentiment"] - competitor_summary["competitor_avg_sentiment"]
+        m3.metric("Sentiment vs. Competitors", f"{comp_sent_gap:+.3f}",
+                   delta=f"{comp_sent_gap:+.3f}", delta_color="inverse")
+    else:
+        m3.metric("Sentiment vs. Competitors", "N/A")
+    m4.metric("Top Fix ROI", f"+{sim.get('improvement_pct_high', 0):.0f}%",
+               help=f"Sentiment lift if '{sim.get('target_aspect', 'top issue')}' is fixed")
+
+    if competitor_summary.get("insight"):
+        st.markdown(
+            f'<div class="so-what"><div class="so-what-title">SO WHAT?</div>'
+            f'{competitor_summary["insight"]}</div>', unsafe_allow_html=True,
+        )
+
+    st.markdown("---")
+    st.markdown("### 🤖 AI Summary of Customer Complaints")
+    st.caption(
+        f"Generated from {ai_summary.get('n_complaints_summarized', 0):,} negative/frustrated reviews — "
+        "read this instead of scrolling raw quotes."
+    )
+    overall_ai = ai_summary.get("overall", "")
+    if overall_ai:
+        st.markdown(
+            f'<div class="so-what"><div class="so-what-title">OVERALL</div>{overall_ai}</div>',
+            unsafe_allow_html=True,
+        )
+    by_aspect_ai = ai_summary.get("by_aspect", {})
+    if by_aspect_ai:
+        acols = st.columns(len(by_aspect_ai))
+        for col, (aspect, text) in zip(acols, by_aspect_ai.items()):
+            with col:
+                st.markdown(f"""
+                <div style="background:#0f172a;padding:18px;border-radius:12px;border:1px solid #1e293b;
+                            border-top:3px solid #FF8F8F;height:100%;">
+                    <div style="font-weight:700;color:#FF8F8F;margin-bottom:8px;font-size:0.9rem;">{aspect}</div>
+                    <div style="font-size:0.85rem;color:#cbd5e1;line-height:1.5;">{text}</div>
+                </div>""", unsafe_allow_html=True)
+    elif not overall_ai:
+        st.info("Run `day3.6_ai_complaint_summary.py` to generate this section.")
+
+    st.markdown("---")
+    st.success(f"**Bottom line:** {sim.get('slide_pitch', 'Run the pipeline to generate a recommendation.')}")
+    st.caption(
+        "Explore the tabs above for the supporting detail behind every number here — "
+        "Priority Matrix, Competitor Benchmark, and the Silent Killer Drill-Down."
+    )
 
 # ── Tab 1: Priority Matrix ─────────────────────────────────────────────
 with tab1:
@@ -485,10 +617,12 @@ with tab1:
 # ── Tab 2: Emotion Deep Dive ──────────────────────────────────────────
 with tab2:
     st.subheader("Emotion Signal Analysis")
-    st.caption(
-        f"Active: **{', '.join(DISPLAY_LABELS.values())}**  |  "
-        "Disgust, fear, surprise, neutral excluded — no actionable hardware signal."
-    )
+    st.caption("Which features trigger anger vs. disappointment vs. joy.")
+    with st.expander("Methodology"):
+        st.caption(
+            f"Active signals: **{', '.join(DISPLAY_LABELS.values())}**  |  "
+            "Disgust, fear, surprise, neutral excluded — no actionable hardware signal."
+        )
 
     col_full, col_urgency = st.columns(2)
 
@@ -878,6 +1012,7 @@ with tab5:
 with tab6:
     st.subheader("🤖 Advanced ML Analytics")
     st.markdown("*Behind-the-scenes models driving the intelligence suite.*")
+    st.caption("This tab is for the technical team. For the business read, see 🏠 Executive Summary.")
 
     ml_col1, ml_col2 = st.columns(2)
 
@@ -907,36 +1042,82 @@ with tab6:
             st.warning("Churn model metrics not found.")
 
         st.markdown("---")
-        st.markdown("#### 3. Sentence-Transformers Semantic Search")
+        st.markdown("#### 3. Query Copilot — Semantic Search + Insights")
+        st.caption("Ask a question in plain English. We find the most similar reviews by "
+                   "meaning (not keyword match) and summarize what they say as a group.")
         if ml_metrics.get("semantic_search", {}).get("available"):
-            search_query = st.text_input("Semantic Search Query", placeholder="e.g. 'the battery dies too fast'")
+
+            @st.cache_resource
+            def _load_embedder():
+                from sentence_transformers import SentenceTransformer
+                return SentenceTransformer("all-MiniLM-L6-v2")
+
+            @st.cache_data
+            def _load_semantic_index():
+                embs = np.load(os.path.join(DATA_DIR, "review_embeddings.npy"))
+                idx = pd.read_csv(os.path.join(DATA_DIR, "review_index.csv"))
+                return embs, idx
+
+            search_query = st.text_input("Query", placeholder="e.g. 'the battery dies too fast'")
+            top_k = st.slider("Results", min_value=3, max_value=15, value=6, key="query_top_k")
+
             if search_query:
                 try:
-                    from sentence_transformers import SentenceTransformer
                     from sklearn.metrics.pairwise import cosine_similarity
                     with st.spinner("Searching via embeddings..."):
-                        emb_model = SentenceTransformer("all-MiniLM-L6-v2")
+                        emb_model = _load_embedder()
+                        review_embs, review_index = _load_semantic_index()
                         query_emb = emb_model.encode([search_query])
-                        review_embs = np.load(os.path.join(DATA_DIR, "review_embeddings.npy"))
-                        review_index = pd.read_csv(os.path.join(DATA_DIR, "review_index.csv"))
-                        
+
                         sims = cosine_similarity(query_emb, review_embs)[0]
-                        top_idx = np.argsort(sims)[::-1][:3]
-                        
-                        for i in top_idx:
+                        top_idx = np.argsort(sims)[::-1][:top_k]
+                        matches = review_index.iloc[top_idx].copy()
+                        matches["similarity"] = sims[top_idx]
+
+                        # -- Synthesized insight over the matched reviews --------
+                        avg_sent   = matches["roberta_score"].mean() if "roberta_score" in matches.columns else None
+                        avg_star   = matches["star_rating"].mean() if "star_rating" in matches.columns else None
+                        sk_rate    = (matches["is_silent_killer"].mean() * 100
+                                      if "is_silent_killer" in matches.columns else None)
+                        top_aspect = (matches["topic_label"].mode().iloc[0]
+                                      if "topic_label" in matches.columns and not matches["topic_label"].mode().empty
+                                      else None)
+
+                        insight_bits = []
+                        if avg_sent is not None:
+                            tone = "negative" if avg_sent < -0.1 else ("positive" if avg_sent > 0.1 else "mixed/neutral")
+                            insight_bits.append(f"Average sentiment among these matches is **{avg_sent:+.2f}** ({tone})")
+                        if avg_star is not None:
+                            insight_bits.append(f"average star rating **{avg_star:.1f}★**")
+                        if top_aspect is not None:
+                            insight_bits.append(f"most commonly tied to **{top_aspect}**")
+                        if sk_rate is not None and sk_rate > 0:
+                            insight_bits.append(f"**{sk_rate:.0f}%** are Silent Killers (high stars, hidden frustration)")
+
+                        if insight_bits:
+                            st.markdown(
+                                f'<div class="so-what">'
+                                f'<div class="so-what-title">INSIGHT</div>'
+                                f'{"; ".join(insight_bits)}.'
+                                f'</div>',
+                                unsafe_allow_html=True,
+                            )
+
+                        for _, row in matches.iterrows():
+                            aspect_bit = f" | Aspect: {row['topic_label']}" if "topic_label" in row else ""
+                            star_bit = f" | Stars: {row['star_rating']}" if "star_rating" in row else ""
                             st.markdown(f"""
                             <div style="background:#0f172a; padding:12px; border-radius:8px; margin-bottom:8px; border-left:3px solid #00FFB3;">
                                 <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:4px;">
-                                    <strong>Similarity: {sims[i]:.2f}</strong> | Aspect: {review_index.iloc[i]['topic_label']} | 
-                                    Stars: {review_index.iloc[i]['star_rating']}
+                                    <strong>Similarity: {row['similarity']:.2f}</strong>{aspect_bit}{star_bit}
                                 </div>
-                                <div style="font-size:0.9rem;">{review_index.iloc[i]['review_text']}</div>
+                                <div style="font-size:0.9rem;">{row['review_text']}</div>
                             </div>
                             """, unsafe_allow_html=True)
                 except Exception as e:
                     st.error(f"Search error: {e}")
         else:
-            st.warning("Semantic search not available.")
+            st.warning("Semantic search not available. Run day4_ml_models.py to build the review index.")
 
     with ml_col2:
         st.markdown("#### 2. Isolation Forest Anomaly Detection")
@@ -997,3 +1178,77 @@ with tab6:
             st.caption(f"Projected trend: **{direction}**")
         else:
             st.warning("Forecast data not found.")
+
+# ── Tab 7: Competitor Benchmark ───────────────────────────────────────
+with tab7:
+    st.subheader("📊 Competitor Benchmark")
+    st.markdown(
+        "The flagship vs. its direct competitors — same category, different brand, "
+        "auto-selected by review volume during data ingestion. Compares **real "
+        "sentiment**, not just the star rating management already sees."
+    )
+
+    if competitor_comparison.empty:
+        st.warning(
+            "No competitor data found. Run `python setup_scripts/stream_data.py` "
+            "(discovers competitors) then `python day3.5_competitor_benchmark.py` "
+            "(scores + compares them)."
+        )
+    else:
+        insight_text = competitor_summary.get("insight")
+        if insight_text:
+            st.markdown(
+                f'<div class="so-what">'
+                f'<div class="so-what-title">SO WHAT?</div>'
+                f'{insight_text}'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+        cdf = competitor_comparison.copy()
+        cdf["label"] = cdf["brand"].fillna("Unknown") + np.where(cdf["is_flagship"], " (Flagship)", "")
+        cdf = cdf.sort_values("is_flagship", ascending=False)
+
+        col_star, col_sent = st.columns(2)
+        bar_colors = ["#FF4C4C" if f else "#4C9EFF" for f in cdf["is_flagship"]]
+
+        with col_star:
+            fig_star = go.Figure(go.Bar(
+                y=cdf["label"], x=cdf["avg_star"], orientation="h",
+                marker_color=bar_colors, text=cdf["avg_star"].round(2), textposition="outside",
+            ))
+            fig_star.update_layout(**DARK, title="Average Star Rating (what management sees)",
+                                   xaxis=dict(range=[0, 5], gridcolor="#1e293b"), height=320)
+            st.plotly_chart(fig_star, use_container_width=True)
+
+        with col_sent:
+            fig_sent = go.Figure(go.Bar(
+                y=cdf["label"], x=cdf["avg_sentiment"], orientation="h",
+                marker_color=bar_colors, text=cdf["avg_sentiment"].round(3), textposition="outside",
+            ))
+            fig_sent.update_layout(**DARK, title="Average Sentiment Score (what customers feel)",
+                                   xaxis=dict(range=[-1, 1], gridcolor="#1e293b"), height=320)
+            fig_sent.add_vline(x=0, line_color="rgba(255,255,255,0.2)")
+            st.plotly_chart(fig_sent, use_container_width=True)
+
+        st.markdown("---")
+        st.markdown("#### Full Comparison Table")
+        display_cdf = cdf[["label", "n_reviews", "avg_star", "avg_sentiment", "silent_killer_rate_pct"]].copy()
+        display_cdf["avg_star"] = display_cdf["avg_star"].round(2)
+        display_cdf["avg_sentiment"] = display_cdf["avg_sentiment"].round(3)
+        display_cdf["silent_killer_rate_pct"] = display_cdf["silent_killer_rate_pct"].round(1)
+        st.dataframe(
+            display_cdf.rename(columns={
+                "label": "Product", "n_reviews": "Reviews",
+                "avg_star": "Avg Star", "avg_sentiment": "Avg Sentiment",
+                "silent_killer_rate_pct": "Silent Killer Rate (%)",
+            }),
+            use_container_width=True, hide_index=True,
+        )
+        sk_thresh = competitor_summary.get("sk_threshold_shared")
+        if sk_thresh is not None:
+            st.caption(
+                f"Silent Killer rates use a single shared threshold "
+                f"(prob_negative ≥ {sk_thresh:.3f}) computed once across the flagship "
+                f"and all competitors, so every product is held to the same bar."
+            )
